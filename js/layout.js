@@ -14,7 +14,7 @@
             '<div id="siteLogoFixed" class="fixed top-2 right-2 sm:top-4 sm:right-4 z-40 bg-white/90 backdrop-blur-sm rounded-lg p-1 sm:p-2 shadow-lg transition-opacity duration-200">' +
             '  <img id="siteLogoTopRight" src="assets/logo.svg" alt="Logo" class="h-10 w-auto sm:h-16 md:h-[72px]" />' +
             '</div>' +
-            '<section id="heroSection" class="bg-gradient-to-b from-[#244855] to-black text-white min-h-[25vh] sm:h-[30vh] md:h-[36vh] flex items-center py-6 sm:py-0">' +
+            '<section id="heroSection" class="bg-gradient-to-b from-[#244855] to-black text-white min-h-[30vh] sm:h-[36vh] flex items-center py-6 sm:py-0 relative">' +
             '  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">' +
             '    <div class="text-center">' +
             '      <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 leading-tight px-2">Monty\'s Letting & Management</h1>' +
@@ -105,9 +105,36 @@
                     50% { transform: scale(1.05); }
                     100% { transform: scale(1); }
                 }
+                html { scroll-behavior: smooth; }
+                @media (prefers-reduced-motion: reduce) {
+                    * { animation: none !important; transition: none !important; }
+                }
             `;
             document.head.appendChild(style);
         }
+
+        // Performance: Preconnect to Google Fonts
+        (function ensurePreconnect(){
+            try {
+                var head = document.head;
+                if (!head) return;
+                var hasGFonts = !!head.querySelector('link[rel="preconnect"][href*="fonts.googleapis.com"]');
+                var hasGStatic = !!head.querySelector('link[rel="preconnect"][href*="fonts.gstatic.com"]');
+                if (!hasGFonts) {
+                    var l1 = document.createElement('link');
+                    l1.rel = 'preconnect';
+                    l1.href = 'https://fonts.googleapis.com';
+                    head.appendChild(l1);
+                }
+                if (!hasGStatic) {
+                    var l2 = document.createElement('link');
+                    l2.rel = 'preconnect';
+                    l2.href = 'https://fonts.gstatic.com';
+                    l2.crossOrigin = 'anonymous';
+                    head.appendChild(l2);
+                }
+            } catch (e) {}
+        })();
 
         var frag = document.createElement('div');
         frag.innerHTML = headerHtml;

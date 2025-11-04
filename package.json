@@ -4,19 +4,24 @@
   "description": "Monty's Letting & Management Guerrilla Business Mastermind Course",
   "main": "index.html",
   "scripts": {
-    "dev": "npx http-server -p 8000 -o",
-    "start": "npx http-server -p 8000 -o",
+    "dev": "node server.js",
+    "start": "node server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "deploy:vercel": "npx vercel --prod --yes --confirm"
+    "deploy:vercel": "npx vercel --prod --yes --confirm",
+    "clean": "rm -rf node_modules coverage && npm install"
   },
   "jest": {
     "testEnvironment": "jsdom",
     "collectCoverageFrom": [
       "js/**/*.js"
     ],
-    "coverageReporters": ["text", "lcov", "html"]
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
   },
   "keywords": [
     "course",
@@ -30,5 +35,8 @@
     "http-server": "^14.1.1",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }

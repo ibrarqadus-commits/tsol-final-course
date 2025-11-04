@@ -159,7 +159,7 @@
             } catch (e) {
                 users = [];
             }
-            const user = users.find(u => u.email === email && u.password === password);
+            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
 
             if (user) {
                 // Save current user
