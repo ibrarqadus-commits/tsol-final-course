@@ -37,6 +37,16 @@ function json_response($data, int $code = 200) {
 
 function start_session() {
     if (session_status() === PHP_SESSION_NONE) {
+        // Configure session for Hostinger compatibility
+        ini_set('session.cookie_httponly', '1');
+        ini_set('session.use_only_cookies', '1');
+        ini_set('session.cookie_samesite', 'Lax');
+        
+        // Set secure cookie if HTTPS
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+            ini_set('session.cookie_secure', '1');
+        }
+        
         session_start();
     }
 }

@@ -158,19 +158,40 @@
                 const form = new FormData();
                 form.append('email', email);
                 form.append('password', password);
-                const res = await fetch('api/login.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                const res = await fetch('api/login.php', { 
+                    method: 'POST', 
+                    body: form, 
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                // Check if response is JSON
+                const contentType = res.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await res.text();
+                    throw new Error('Server returned non-JSON response: ' + text.substring(0, 100));
+                }
+                
                 const data = await res.json();
                 if (!res.ok || data.error) {
                     // Show specific error message
-                    if (data.error === 'DB_CONNECTION_FAILED') {
-                        errorMsg.textContent = 'Database connection failed. Please check server configuration.';
+                    let errorText = 'Login failed. ';
+                    if (data.error === 'DB_CONNECTION_FAILED' || data.error === 'DB_ERROR') {
+                        errorText = 'Database connection failed. Please check api/config.php has correct database credentials.';
                     } else if (data.error === 'INVALID_CREDENTIALS') {
-                        errorMsg.textContent = 'Invalid email or password.';
+                        errorText = 'Invalid email or password. Default: admin@lm.com / admin123';
                     } else if (data.error === 'SERVER_ERROR') {
-                        errorMsg.textContent = 'Server error: ' + (data.message || 'Please contact administrator.');
+                        errorText = 'Server error: ' + (data.message || 'Please check server configuration.');
+                    } else if (data.error === 'METHOD_NOT_ALLOWED') {
+                        errorText = 'Invalid request method. Please refresh and try again.';
+                    } else if (data.error === 'INVALID_INPUT') {
+                        errorText = 'Please enter both email and password.';
                     } else {
-                        errorMsg.textContent = data.message || 'Login failed. Please try again.';
+                        errorText = data.message || data.error || 'Login failed. Please try again.';
                     }
+                    errorMsg.textContent = errorText;
                     errorMsg.style.display = 'block';
                     console.error('Login error:', data);
                     return;
@@ -188,7 +209,11 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (e) {
-                errorMsg.textContent = 'Unable to connect to server. Please check your internet connection and try again.';
+                if (e.message && e.message.includes('non-JSON')) {
+                    errorMsg.textContent = 'Server configuration error. Please check api/config.php and ensure database is set up.';
+                } else {
+                    errorMsg.textContent = 'Unable to connect to server. Error: ' + (e.message || 'Please check your connection and try again.');
+                }
                 errorMsg.style.display = 'block';
                 console.error('Login exception:', e);
             }

@@ -866,15 +866,22 @@
         (async function ensureAdmin(){
             try {
                 const res = await fetch('api/me.php', { credentials: 'same-origin' });
+                if (!res.ok) {
+                    // Session expired or not logged in
+                    alert('Please log in first.');
+                    window.location.href = 'login.html';
+                    return;
+                }
                 const data = await res.json();
                 if (!data.authenticated || !data.user || data.user.role !== 'admin') {
-                    alert('Access denied. Admin only.');
-                    window.location.href = 'index.html';
+                    alert('Access denied. Admin only. Please log in with admin credentials.');
+                    window.location.href = 'login.html';
                     return;
                 }
             } catch (e) {
-                alert('Access denied. Admin only.');
-                window.location.href = 'index.html';
+                console.error('Admin check error:', e);
+                alert('Unable to verify admin access. Please log in.');
+                window.location.href = 'login.html';
                 return;
             }
         })();

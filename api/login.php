@@ -31,8 +31,26 @@ try {
         'approved' => (int)$user['approved'] === 1
     ];
 
-    json_response(['ok' => true, 'user' => $_SESSION['user']]);
+    // Return user data (without sensitive info)
+    $responseData = [
+        'ok' => true,
+        'user' => [
+            'id' => $_SESSION['user']['id'],
+            'name' => $_SESSION['user']['name'],
+            'email' => $_SESSION['user']['email'],
+            'role' => $_SESSION['user']['role'],
+            'approved' => $_SESSION['user']['approved']
+        ]
+    ];
+    
+    json_response($responseData);
+} catch (PDOException $e) {
+    // Database-specific errors
+    error_log("Login PDO Error: " . $e->getMessage());
+    json_response(['error' => 'DB_ERROR', 'message' => 'Database error. Please check configuration.'], 500);
 } catch (Throwable $e) {
+    // General errors
+    error_log("Login Error: " . $e->getMessage());
     json_response(['error' => 'SERVER_ERROR', 'message' => $e->getMessage()], 500);
 }
 
