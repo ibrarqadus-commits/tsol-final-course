@@ -161,8 +161,18 @@
                 const res = await fetch('api/login.php', { method: 'POST', body: form, credentials: 'same-origin' });
                 const data = await res.json();
                 if (!res.ok || data.error) {
-                    errorMsg.textContent = 'Invalid email or password.';
+                    // Show specific error message
+                    if (data.error === 'DB_CONNECTION_FAILED') {
+                        errorMsg.textContent = 'Database connection failed. Please check server configuration.';
+                    } else if (data.error === 'INVALID_CREDENTIALS') {
+                        errorMsg.textContent = 'Invalid email or password.';
+                    } else if (data.error === 'SERVER_ERROR') {
+                        errorMsg.textContent = 'Server error: ' + (data.message || 'Please contact administrator.');
+                    } else {
+                        errorMsg.textContent = data.message || 'Login failed. Please try again.';
+                    }
                     errorMsg.style.display = 'block';
+                    console.error('Login error:', data);
                     return;
                 }
                 // Store a light copy for UI convenience
@@ -178,8 +188,9 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (e) {
-                errorMsg.textContent = 'Login failed. Please try again.';
+                errorMsg.textContent = 'Unable to connect to server. Please check your internet connection and try again.';
                 errorMsg.style.display = 'block';
+                console.error('Login exception:', e);
             }
         }
     </script>
