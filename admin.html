@@ -625,7 +625,7 @@
             }
         }
 
-        function displayUnitContent() {
+        async function displayUnitContent() {
             const moduleId = document.getElementById('moduleSelect').value;
             const unitId = document.getElementById('unitSelect').value;
             const contentEditorArea = document.getElementById('contentEditorArea');
@@ -638,40 +638,50 @@
             }
 
             contentEditorArea.classList.remove('hidden');
-            
-            // Load existing content from localStorage if available
-            const customContent = JSON.parse(localStorage.getItem('moduleContent')) || {};
-            const contentKey = `${moduleId}.${unitId}`;
-            editor.value = customContent[contentKey] || '';
-
-            // Load existing unit video url
-            const unitVideos = JSON.parse(localStorage.getItem('unitVideos')) || {};
-            unitVideoUrlInput.value = unitVideos[`${moduleId}.${unitId}`] || '';
+            try {
+                const res = await fetch(`api/unit_get.php?module=${encodeURIComponent(moduleId)}&unit=${encodeURIComponent(unitId)}`, { credentials: 'same-origin' });
+                const data = await res.json();
+                editor.value = (res.ok && data && typeof data.content === 'string') ? data.content : '';
+                unitVideoUrlInput.value = (res.ok && data && typeof data.video_url === 'string') ? data.video_url : '';
+            } catch (e) {
+                editor.value = '';
+                unitVideoUrlInput.value = '';
+            }
         }
 
-        function saveUnitContent() {
+        async function saveUnitContent() {
             const moduleId = document.getElementById('moduleSelect').value;
             const unitId = document.getElementById('unitSelect').value;
             const content = document.getElementById('unitContentEditor').value;
-
-            const customContent = JSON.parse(localStorage.getItem('moduleContent')) || {};
-            customContent[`${moduleId}.${unitId}`] = content;
-            localStorage.setItem('moduleContent', JSON.stringify(customContent));
-
-            alert('Content saved successfully!');
-            renderUnitsOverview();
+            const form = new FormData();
+            form.append('module', moduleId);
+            form.append('unit', unitId);
+            form.append('content', content);
+            try {
+                await fetch('api/unit_save.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                alert('Content saved successfully!');
+                renderUnitsOverview();
+            } catch (e) {
+                alert('Failed to save content.');
+            }
         }
 
 
-        function saveUnitVideoUrl() {
+        async function saveUnitVideoUrl() {
             const moduleId = document.getElementById('moduleSelect').value;
             const unitId = document.getElementById('unitSelect').value;
             const url = document.getElementById('unitVideoUrl').value;
-            const unitVideos = JSON.parse(localStorage.getItem('unitVideos')) || {};
-            unitVideos[`${moduleId}.${unitId}`] = url;
-            localStorage.setItem('unitVideos', JSON.stringify(unitVideos));
-            alert('Unit video saved!');
-            renderUnitsOverview();
+            const form = new FormData();
+            form.append('module', moduleId);
+            form.append('unit', unitId);
+            form.append('video_url', url);
+            try {
+                await fetch('api/unit_save.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                alert('Unit video saved!');
+                renderUnitsOverview();
+            } catch (e) {
+                alert('Failed to save video.');
+            }
         }
 
         function resetEditor() {
@@ -679,17 +689,21 @@
         }
 
         // Video management functionality
-        function saveVideoSettings() {
+        async function saveVideoSettings() {
             const heroVideo = document.getElementById('heroVideoUrl').value;
             const video2 = document.getElementById('video2Url').value;
             const homeUnitContent = document.getElementById('homeUnitContent').value;
 
-            const settings = JSON.parse(localStorage.getItem('videoSettings')) || {};
-            settings.heroVideo = heroVideo;
-            settings.video2 = video2;
-            settings.homeUnitContent = homeUnitContent;
-            localStorage.setItem('videoSettings', JSON.stringify(settings));
-            alert('Video settings saved successfully!');
+            const form = new FormData();
+            form.append('heroVideo', heroVideo);
+            form.append('video2', video2);
+            form.append('homeUnitContent', homeUnitContent);
+            try {
+                await fetch('api/video_settings.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                alert('Video settings saved successfully!');
+            } catch (e) {
+                alert('Failed to save settings.');
+            }
         }
 
         // User-friendly content editor with paste preservation
@@ -765,42 +779,49 @@
         }
 
         // Render Units Overview table
-        function renderUnitsOverview() {
+        async function renderUnitsOverview() {
             const moduleId = document.getElementById('moduleSelect').value;
             if (!moduleId) return;
             const tbody = document.getElementById('unitsOverviewBody');
             const filter = (document.getElementById('unitsFilter') || {}).value || 'all';
-            const customContent = JSON.parse(localStorage.getItem('moduleContent')) || {};
-            const unitVideos = JSON.parse(localStorage.getItem('unitVideos')) || {};
-            const rows = moduleUnits[moduleId].map(unit => {
-                const uid = moduleId + '.' + unit.split('.')[1];
-                const hasVideo = Boolean(unitVideos[uid]);
-                const hasContent = Boolean(customContent[`${moduleId}.${uid}`] || customContent[uid]);
-                return { uid, label: unit, hasVideo, hasContent };
-            }).filter(row => {
-                if (filter === 'missing') return !(row.hasVideo && row.hasContent);
-                if (filter === 'complete') return row.hasVideo && row.hasContent;
-                return true;
-            });
+            try {
+                const res = await fetch(`api/units_overview.php?module=${encodeURIComponent(moduleId)}`, { credentials: 'same-origin' });
+                const data = await res.json();
+                const map = new Map();
+                if (res.ok && data.units) {
+                    data.units.forEach(r => map.set(r.unit_id, { hasVideo: !!Number(r.has_video), hasContent: !!Number(r.has_content) }));
+                }
+                const rows = moduleUnits[moduleId].map(unit => {
+                    const uid = moduleId + '.' + unit.split('.')[1];
+                    const flags = map.get(uid) || { hasVideo: false, hasContent: false };
+                    return { uid, label: unit, hasVideo: flags.hasVideo, hasContent: flags.hasContent };
+                }).filter(row => {
+                    if (filter === 'missing') return !(row.hasVideo && row.hasContent);
+                    if (filter === 'complete') return row.hasVideo && row.hasContent;
+                    return true;
+                });
 
-            const badge = (ok) => ok 
-                ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">OK</span>'
-                : '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Missing</span>';
+                const badge = (ok) => ok 
+                    ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">OK</span>'
+                    : '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Missing</span>';
 
-            tbody.innerHTML = rows.map(r => `
-                <tr>
-                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-800">Unit ${r.label}</td>
-                    <td class="px-3 sm:px-4 py-2">${badge(r.hasVideo)}</td>
-                    <td class="px-3 sm:px-4 py-2">${badge(r.hasContent)}</td>
-                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm">
-                        <div class="flex flex-wrap gap-2">
-                            <button class="text-[#244855] hover:text-[#1a3540]" onclick="openUnit('${r.uid}')">Edit</button>
-                            <button class="text-indigo-600 hover:text-indigo-800" title="Set Video URL" onclick="quickSetVideo('${r.uid}')">Set Video</button>
-                            ${r.hasVideo ? `<button class=\"text-red-600 hover:text-red-800\" title=\"Clear Video\" onclick=\"quickClearVideo('${r.uid}')\">Clear</button>` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+                tbody.innerHTML = rows.map(r => `
+                    <tr>
+                        <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-800">Unit ${r.label}</td>
+                        <td class="px-3 sm:px-4 py-2">${badge(r.hasVideo)}</td>
+                        <td class="px-3 sm:px-4 py-2">${badge(r.hasContent)}</td>
+                        <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                            <div class="flex flex-wrap gap-2">
+                                <button class="text-[#244855] hover:text-[#1a3540]" onclick="openUnit('${r.uid}')">Edit</button>
+                                <button class="text-indigo-600 hover:text-indigo-800" title="Set Video URL" onclick="quickSetVideo('${r.uid}')">Set Video</button>
+                                ${r.hasVideo ? `<button class=\"text-red-600 hover:text-red-800\" title=\"Clear Video\" onclick=\"quickClearVideo('${r.uid}')\">Clear</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '';
+            }
         }
 
         function openUnit(uid) {
@@ -812,21 +833,30 @@
             document.getElementById('contentEditorArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function quickSetVideo(uid) {
-            const current = (JSON.parse(localStorage.getItem('unitVideos')) || {})[uid] || '';
-            const url = prompt('Paste Unit Video URL', current);
+        async function quickSetVideo(uid) {
+            const url = prompt('Paste Unit Video URL');
             if (url === null) return; // cancelled
-            const unitVideos = JSON.parse(localStorage.getItem('unitVideos')) || {};
-            unitVideos[uid] = url.trim();
-            localStorage.setItem('unitVideos', JSON.stringify(unitVideos));
+            try {
+                const [moduleId, unitId] = uid.split('.');
+                const form = new FormData();
+                form.append('module', moduleId);
+                form.append('unit', uid);
+                form.append('video_url', url.trim());
+                await fetch('api/unit_save.php', { method: 'POST', body: form, credentials: 'same-origin' });
+            } catch (e) {}
             renderUnitsOverview();
         }
 
-        function quickClearVideo(uid) {
+        async function quickClearVideo(uid) {
             if (!confirm('Remove video URL for this unit?')) return;
-            const unitVideos = JSON.parse(localStorage.getItem('unitVideos')) || {};
-            delete unitVideos[uid];
-            localStorage.setItem('unitVideos', JSON.stringify(unitVideos));
+            try {
+                const [moduleId, unitId] = uid.split('.');
+                const form = new FormData();
+                form.append('module', moduleId);
+                form.append('unit', uid);
+                form.append('video_url', '');
+                await fetch('api/unit_save.php', { method: 'POST', body: form, credentials: 'same-origin' });
+            } catch (e) {}
             renderUnitsOverview();
         }
 
@@ -853,16 +883,18 @@
         updateStudentsTable();
 
         // Prefill video/content settings on load
-        (function prefillVideoSettings(){
+        (async function prefillVideoSettings(){
             try {
-                const settings = JSON.parse(localStorage.getItem('videoSettings')) || {};
-                if (settings.heroVideo) document.getElementById('heroVideoUrl').value = settings.heroVideo;
+                const res = await fetch('api/video_settings.php', { credentials: 'same-origin' });
+                const settings = await res.json();
+                if (settings.hero_video) document.getElementById('heroVideoUrl').value = settings.hero_video;
                 if (settings.video2) document.getElementById('video2Url').value = settings.video2;
-                if (settings.homeUnitContent) document.getElementById('homeUnitContent').value = settings.homeUnitContent;
-                
+                if (settings.home_content) document.getElementById('homeUnitContent').value = settings.home_content;
                 // Setup content editor after values are loaded
                 setupContentEditor();
-            } catch (e) {}
+            } catch (e) {
+                setupContentEditor();
+            }
         })();
 
         // Load Social Links when Social tab opens initially

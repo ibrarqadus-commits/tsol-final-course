@@ -453,12 +453,13 @@
         })();
 
         // Render saved hero video (from admin > Home Page Videos)
-        (function renderHomeVideo() {
+        (async function renderHomeVideo() {
             try {
                 const container = document.getElementById('homeVideoContainer');
                 if (!container) return;
-                const settings = JSON.parse(localStorage.getItem('videoSettings')) || {};
-                const url = settings.heroVideo;
+                const res = await fetch('api/video_settings.php', { credentials: 'same-origin' });
+                const settings = await res.json();
+                const url = settings.hero_video || '';
                 if (!url) return;
 
                 let embed = '';
@@ -475,9 +476,7 @@
                     embed = `<a class="block text-[#244855] underline" href="${url}" target="_blank" rel="noopener">Open Video</a>`;
                 }
                 container.innerHTML = embed;
-            } catch (e) {
-                // Silently ignore if malformed
-            }
+            } catch (e) {}
         })();
 
         // Hide hero logo once hero section scrolls out of view
@@ -498,12 +497,13 @@
         })();
 
         // Render Video 2 if configured
-        (function renderVideo2(){
+        (async function renderVideo2(){
             try {
                 const container = document.getElementById('homeVideo2Container');
                 if (!container) return;
-                const settings = JSON.parse(localStorage.getItem('videoSettings')) || {};
-                const url = settings.video2;
+                const res = await fetch('api/video_settings.php', { credentials: 'same-origin' });
+                const settings = await res.json();
+                const url = settings.video2 || '';
                 if (!url) return;
 
                 let embed = '';
@@ -552,14 +552,14 @@
         })();
 
         // Render selected unit content (or custom content) on home page
-        (function renderHomeExtras(){
+        (async function renderHomeExtras(){
             try {
-                const settings = JSON.parse(localStorage.getItem('videoSettings')) || {};
+                const res = await fetch('api/video_settings.php', { credentials: 'same-origin' });
+                const settings = await res.json();
                 const textEl = document.getElementById('homeTextBlock');
                 if (!textEl) return;
-                
-                if (settings.homeUnitContent) {
-                    textEl.innerHTML = settings.homeUnitContent;
+                if (settings.home_content) {
+                    textEl.innerHTML = settings.home_content;
                 } else {
                     textEl.innerHTML = '';
                 }
