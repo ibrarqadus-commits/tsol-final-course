@@ -147,35 +147,38 @@
             } catch (e) {}
         })();
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
 
-            let users;
+            errorMsg.style.display = 'none';
             try {
-                users = JSON.parse(localStorage.getItem('users')) || [];
-            } catch (e) {
-                users = [];
-            }
-            const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-
-            if (user) {
-                // Save current user
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                
-                // Redirect based on role
-                if (user.role === 'admin') {
+                const form = new FormData();
+                form.append('email', email);
+                form.append('password', password);
+                const res = await fetch('api/login.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    errorMsg.textContent = 'Invalid email or password.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+                // Store a light copy for UI convenience
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                if (data.user.role === 'admin') {
                     window.location.href = 'admin.html';
-                } else if (user.approved) {
+                    return;
+                }
+                if (data.user.approved) {
                     window.location.href = 'module1.html';
                 } else {
                     errorMsg.textContent = 'Your account is pending admin approval.';
                     errorMsg.style.display = 'block';
                 }
-            } else {
-                errorMsg.textContent = 'Invalid email or password.';
+            } catch (e) {
+                errorMsg.textContent = 'Login failed. Please try again.';
                 errorMsg.style.display = 'block';
             }
         }

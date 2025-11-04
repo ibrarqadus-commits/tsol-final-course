@@ -419,59 +419,54 @@
         }
 
         // Students functionality
-        function logout() {
+        async function logout() {
+            try { await fetch('api/logout.php', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
             localStorage.removeItem('currentUser');
             window.location.href = 'index.html';
         }
 
-        function updateStats() {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const students = users.filter(u => u.role !== 'admin');
-            // Handle both explicit true and truthy values
-            const approved = students.filter(s => s.approved === true);
-            // Handle false, undefined, and null as pending
-            const pending = students.filter(s => s.approved === false || s.approved === undefined || s.approved === null);
-
-            document.getElementById('totalStudents').textContent = students.length;
-            document.getElementById('approvedStudents').textContent = approved.length;
-            document.getElementById('pendingStudents').textContent = pending.length;
+        async function updateStats() {
+            try {
+                const res = await fetch('api/stats.php', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('totalStudents').textContent = data.total;
+                    document.getElementById('approvedStudents').textContent = data.approved;
+                    document.getElementById('pendingStudents').textContent = data.pending;
+                    return;
+                }
+            } catch (e) {}
+            // Fallback
+            document.getElementById('totalStudents').textContent = '0';
+            document.getElementById('approvedStudents').textContent = '0';
+            document.getElementById('pendingStudents').textContent = '0';
         }
 
-        function updatePendingList() {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            // Filter for students (non-admin) who are not approved
-            // Handle both explicit false and undefined/null values
-            const pending = users.filter(u => {
-                return u.role !== 'admin' && (u.approved === false || u.approved === undefined || u.approved === null);
-            });
+        async function updatePendingList() {
             const container = document.getElementById('pendingList');
-
-            // Debug logging
-            console.log('Total users:', users.length);
-            console.log('Pending students:', pending.length);
-            console.log('All users:', users);
-
-            if (pending.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">No pending approvals</p>';
-                return;
+            try {
+                const res = await fetch('api/students.php?status=pending', { credentials: 'same-origin' });
+                const data = await res.json();
+                const pending = (res.ok && data.students) ? data.students : [];
+                if (pending.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500">No pending approvals</p>';
+                    return;
+                }
+                container.innerHTML = pending.map(user => `
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-3">
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm sm:text-base">${user.name}</div>
+                            <div class="text-xs sm:text-sm text-gray-600">${user.email}</div>
+                        </div>
+                        <div class="flex space-x-2 w-full sm:w-auto">
+                            <button onclick="approveStudent('${user.email}')" class="flex-1 sm:flex-none bg-green-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-green-700 text-sm">Approve</button>
+                            <button onclick="rejectStudent('${user.email}')" class="flex-1 sm:flex-none bg-red-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-red-700 text-sm">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-gray-500">Unable to load pending approvals</p>';
             }
-
-            container.innerHTML = pending.map(user => `
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-3">
-                    <div class="flex-1">
-                        <div class="font-semibold text-sm sm:text-base">${user.name}</div>
-                        <div class="text-xs sm:text-sm text-gray-600">${user.email}</div>
-                    </div>
-                    <div class="flex space-x-2 w-full sm:w-auto">
-                        <button onclick="approveStudent('${user.email}')" class="flex-1 sm:flex-none bg-green-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-green-700 text-sm">
-                            Approve
-                        </button>
-                        <button onclick="rejectStudent('${user.email}')" class="flex-1 sm:flex-none bg-red-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-red-700 text-sm">
-                            Reject
-                        </button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         function refreshPendingList() {
@@ -481,39 +476,39 @@
             alert('Student list refreshed!');
         }
 
-        function updateStudentsTable() {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const students = users.filter(u => u.role !== 'admin');
+        async function updateStudentsTable() {
             const tbody = document.getElementById('studentsTable');
-
-            if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No students yet</td></tr>';
-                return;
+            try {
+                const res = await fetch('api/students.php', { credentials: 'same-origin' });
+                const data = await res.json();
+                const students = (res.ok && data.students) ? data.students : [];
+                if (students.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No students yet</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = students.map(user => {
+                    const progress = 0; // DB does not track progress yet
+                    const statusBadge = (parseInt(user.approved, 10) === 1)
+                        ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>'
+                        : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>';
+                    return `
+                        <tr>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${user.name}</td>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${user.email}</td>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">${statusBadge}</td>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                                <div class="w-full bg-gray-200 rounded-full h-2 mb-1"><div class="bg-[#244855] h-2 rounded-full" style="width: ${progress}%"></div></div>
+                                <span class="text-xs">${progress}%</span>
+                            </td>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                                <button onclick="viewProgress('${user.email}')" class="text-[#244855] hover:text-[#1a3540] text-xs sm:text-sm">View</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Unable to load students</td></tr>';
             }
-
-            tbody.innerHTML = students.map(user => {
-                const progress = calculateOverallProgress(user);
-                const statusBadge = user.approved 
-                    ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>'
-                    : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>';
-
-                return `
-                    <tr>
-                        <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${user.name}</td>
-                        <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${user.email}</td>
-                        <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">${statusBadge}</td>
-                        <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                            <div class="w-full bg-gray-200 rounded-full h-2 mb-1">
-                                <div class="bg-[#244855] h-2 rounded-full" style="width: ${progress}%"></div>
-                            </div>
-                            <span class="text-xs">${progress}%</span>
-                        </td>
-                        <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                            <button onclick="viewProgress('${user.email}')" class="text-[#244855] hover:text-[#1a3540] text-xs sm:text-sm">View</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
         }
 
         function calculateOverallProgress(user) {
@@ -531,25 +526,24 @@
             return Math.round((totalCompleted / totalUnits) * 100);
         }
 
-        function approveStudent(email) {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const userIndex = users.findIndex(u => u.email === email);
-            
-            if (userIndex !== -1) {
-                users[userIndex].approved = true;
-                localStorage.setItem('users', JSON.stringify(users));
-                updateStats();
-                updatePendingList();
-                updateStudentsTable();
-            }
+        async function approveStudent(email) {
+            try {
+                const form = new FormData();
+                form.append('email', email);
+                await fetch('api/approve.php', { method: 'POST', body: form, credentials: 'same-origin' });
+            } catch (e) {}
+            updateStats();
+            updatePendingList();
+            updateStudentsTable();
         }
 
-        function rejectStudent(email) {
+        async function rejectStudent(email) {
             if (!confirm('Are you sure you want to reject this student?')) return;
-            
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const filteredUsers = users.filter(u => u.email !== email);
-            localStorage.setItem('users', JSON.stringify(filteredUsers));
+            try {
+                const form = new FormData();
+                form.append('email', email);
+                await fetch('api/reject.php', { method: 'POST', body: form, credentials: 'same-origin' });
+            } catch (e) {}
             updateStats();
             updatePendingList();
             updateStudentsTable();
@@ -836,11 +830,22 @@
             renderUnitsOverview();
         }
 
-        // Check if admin
-        if (!isAdmin()) {
-            alert('Access denied. Admin only.');
-            window.location.href = 'index.html';
-        }
+        // Check if admin on load via server session
+        (async function ensureAdmin(){
+            try {
+                const res = await fetch('api/me.php', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (!data.authenticated || !data.user || data.user.role !== 'admin') {
+                    alert('Access denied. Admin only.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+            } catch (e) {
+                alert('Access denied. Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+        })();
 
         // Initialize dashboard
         updateStats();

@@ -125,7 +125,7 @@
             } catch (e) {}
         })();
 
-        function handleRegister(event) {
+        async function handleRegister(event) {
             event.preventDefault();
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
@@ -137,52 +137,35 @@
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
 
-            // Validate passwords match
             if (password !== confirmPassword) {
                 errorMsg.textContent = 'Passwords do not match.';
                 errorMsg.style.display = 'block';
                 return;
             }
 
-            // Get users from localStorage
-            let users;
             try {
-                users = JSON.parse(localStorage.getItem('users')) || [];
+                const form = new FormData();
+                form.append('name', name);
+                form.append('email', email);
+                form.append('password', password);
+
+                const res = await fetch('api/register.php', { method: 'POST', body: form });
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    const msg = (data && data.error === 'EMAIL_EXISTS') ? 'Email already registered. Please login.' : (data.message || 'Registration failed.');
+                    errorMsg.textContent = msg;
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                successMsg.textContent = 'Registration successful! Please wait for admin approval.';
+                successMsg.style.display = 'block';
+                document.getElementById('registerForm').reset();
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
             } catch (e) {
-                users = [];
-            }
-
-            // Check if email already exists
-            if (users.some(u => u.email === email)) {
-                errorMsg.textContent = 'Email already registered. Please login.';
+                errorMsg.textContent = 'Could not register. Please try again.';
                 errorMsg.style.display = 'block';
-                return;
             }
-
-            // Create new user
-            const newUser = {
-                name: name,
-                email: email,
-                password: password,
-                role: 'student',
-                approved: false,
-                progress: {}
-            };
-
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-
-            // Show success message
-            successMsg.textContent = 'Registration successful! Please wait for admin approval.';
-            successMsg.style.display = 'block';
-
-            // Clear form
-            document.getElementById('registerForm').reset();
-
-            // Redirect to login after 2 seconds
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
         }
     </script>
 </body>
