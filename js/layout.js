@@ -209,6 +209,72 @@
                     color: white;
                     margin-right: 8px;
                 }
+                /* Mobile and tablet optimizations */
+                @media (max-width: 1024px) {
+                    .module-units-dropdown {
+                        min-width: 250px;
+                        max-width: 90vw;
+                        left: 50%;
+                        transform: translateX(-50%) translateY(-10px);
+                    }
+                    .nav-link-container:hover .module-units-dropdown {
+                        transform: translateX(-50%) translateY(0) !important;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .module-units-dropdown {
+                        position: fixed;
+                        left: 50%;
+                        top: 50%;
+                        transform: translateX(-50%) translateY(-50%) scale(0.95);
+                        max-width: 85vw;
+                        max-height: 70vh;
+                        border-radius: 8px;
+                    }
+                    .nav-link-container:hover .module-units-dropdown,
+                    .nav-link-container:active .module-units-dropdown {
+                        transform: translateX(-50%) translateY(-50%) scale(1) !important;
+                    }
+                }
+                /* Touch-friendly improvements */
+                @media (hover: none) and (pointer: coarse) {
+                    .nav-link-container:active .module-units-dropdown {
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        transform: translateY(0) !important;
+                        pointer-events: auto !important;
+                        display: block !important;
+                    }
+                }
+                /* Mobile adjustments */
+                @media (max-width: 640px) {
+                    .nav-link, .nav-link-mobile {
+                        min-height: 44px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0.75rem 1rem;
+                    }
+                    body {
+                        overflow-x: hidden;
+                        width: 100%;
+                    }
+                }
+                /* Tablet and iPad optimizations */
+                @media (min-width: 641px) and (max-width: 1024px) {
+                    .nav-link {
+                        min-height: 44px;
+                        padding: 0.625rem 1rem;
+                    }
+                    .module-units-dropdown {
+                        min-width: 300px;
+                    }
+                }
+                /* Prevent text selection on buttons for better touch experience */
+                .nav-link, .nav-link-mobile, button {
+                    -webkit-tap-highlight-color: transparent;
+                    touch-action: manipulation;
+                }
             `;
             document.head.appendChild(style);
         }

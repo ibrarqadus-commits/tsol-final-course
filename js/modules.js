@@ -99,7 +99,7 @@ async function loadUnit(unitId) {
 
     // Now that resolvedVideoUrl may have been overridden by JSON, build embedHtml
     embedHtml = (() => {
-        const wrapperStart = '<div class="w-full flex justify-center mb-4 sm:mb-6"><div class="w-full md:w-4/5 border-8 sm:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-lg sm:rounded-2xl shadow-xl overflow-hidden" style="box-sizing: content-box;">';
+        const wrapperStart = '<div class="w-full flex justify-center mb-4 sm:mb-6"><div class="w-full md:w-4/5 border-4 sm:border-8 md:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-lg sm:rounded-2xl shadow-xl overflow-hidden" style="box-sizing: content-box; max-width: 100%;">';
         const wrapperEnd = '</div></div>';
         if (!resolvedVideoUrl) return (
             wrapperStart +
@@ -116,7 +116,7 @@ async function loadUnit(unitId) {
                 if (videoId) {
                     return (
                         wrapperStart +
-                        `<iframe class="w-full aspect-video" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>` +
+                        `<iframe class="w-full aspect-video" style="max-width: 100%; height: auto; min-height: 200px;" src="https://www.youtube.com/embed/${videoId}?playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` +
                         wrapperEnd
                     );
                 }
@@ -126,7 +126,7 @@ async function loadUnit(unitId) {
                 if (videoId) {
                     return (
                         wrapperStart +
-                        `<iframe class="w-full aspect-video" src="https://player.vimeo.com/video/${videoId}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>` +
+                        `<iframe class="w-full aspect-video" style="max-width: 100%; height: auto; min-height: 200px;" src="https://player.vimeo.com/video/${videoId}?playsinline=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>` +
                         wrapperEnd
                     );
                 }

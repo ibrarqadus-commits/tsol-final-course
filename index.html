@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Monty's Letting & Management (L&M) Guerrilla Business Mastermind</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,7 +93,50 @@
                 padding-top: 0.75rem;
                 padding-bottom: 0.75rem;
                 border-radius: 0.75rem;
+                min-height: 44px; /* Touch target size */
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
+            
+            /* Better touch targets */
+            .nav-link, .nav-link-mobile {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Prevent horizontal scroll */
+            body {
+                overflow-x: hidden;
+                width: 100%;
+            }
+            
+            /* Improve video container on mobile */
+            .aspect-video {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+
+        /* Tablet and iPad optimizations */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .nav-link {
+                min-height: 44px;
+                padding: 0.625rem 1rem;
+            }
+            
+            .module-units-dropdown {
+                min-width: 300px;
+            }
+        }
+
+        /* Prevent text selection on buttons for better touch experience */
+        .nav-link, .nav-link-mobile, button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         /* Module units dropdown */
@@ -115,6 +158,48 @@
             transform: translateY(-10px);
             transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
             pointer-events: none;
+        }
+
+        /* Mobile and tablet optimizations */
+        @media (max-width: 1024px) {
+            .module-units-dropdown {
+                min-width: 250px;
+                max-width: 90vw;
+                left: 50%;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            
+            .nav-link-container:hover .module-units-dropdown {
+                transform: translateX(-50%) translateY(0) !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .module-units-dropdown {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translateX(-50%) translateY(-50%) scale(0.95);
+                max-width: 85vw;
+                max-height: 70vh;
+                border-radius: 8px;
+            }
+            
+            .nav-link-container:hover .module-units-dropdown,
+            .nav-link-container:active .module-units-dropdown {
+                transform: translateX(-50%) translateY(-50%) scale(1) !important;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-link-container:active .module-units-dropdown {
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: translateY(0) !important;
+                pointer-events: auto !important;
+                display: block !important;
+            }
         }
         
         /* Ensure dropdown has content */
@@ -311,7 +396,7 @@
                         </div>
                         <h3 class="text-lg sm:text-xl font-bold text-gray-800 text-center mb-3 sm:mb-4">WELCOME!</h3>
                         <div class="w-full flex justify-center">
-                            <div id="homeVideoContainer" class="w-full md:w-4/5 border-8 sm:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-xl sm:rounded-2xl shadow-xl overflow-hidden" style="box-sizing: content-box;">
+                            <div id="homeVideoContainer" class="w-full md:w-4/5 border-4 sm:border-8 md:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-xl sm:rounded-2xl shadow-xl overflow-hidden" style="box-sizing: content-box;">
                                 <div class="bg-gray-200 rounded-lg sm:rounded-xl aspect-video flex items-center justify-center">
                                     <span class="text-gray-500 font-semibold text-sm sm:text-base">Home page Video 1</span>
                                 </div>
@@ -330,7 +415,7 @@
                 <div class="hidden lg:block lg:col-span-3"></div>
                 <div class="lg:col-span-9">
                     <div class="w-full flex justify-center">
-                        <div class="bg-gray-200 border-8 sm:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-2xl overflow-hidden mb-10 shadow-[0_8px_16px_rgba(0,0,0,0.15),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] w-full md:w-4/5" style="box-sizing: content-box; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);">
+                        <div class="bg-gray-200 border-4 sm:border-8 md:border-[16px] lg:border-[64px] border-[#eaeaea] rounded-2xl overflow-hidden mb-10 shadow-[0_8px_16px_rgba(0,0,0,0.15),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] w-full md:w-4/5" style="box-sizing: content-box; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);">
                             <div class="aspect-[64/27] p-6 flex items-center justify-center">
                                 <div id="homeTextBlock" class="text-lg text-gray-800 text-center w-full"></div>
                             </div>
@@ -338,7 +423,7 @@
                     </div>
                     <div class="bg-white rounded-xl sm:rounded-2xl overflow-hidden mb-10 sm:mb-16">
                         <div class="w-full">
-                            <div id="homeVideo2Container" class="aspect-video bg-gray-200 flex items-center justify-center rounded-lg sm:rounded-2xl border-8 sm:border-[16px] lg:border-[64px] border-[#eaeaea] shadow-xl overflow-hidden" style="box-sizing: content-box;">
+                            <div id="homeVideo2Container" class="aspect-video bg-gray-200 flex items-center justify-center rounded-lg sm:rounded-2xl border-4 sm:border-8 md:border-[16px] lg:border-[64px] border-[#eaeaea] shadow-xl overflow-hidden" style="box-sizing: content-box;">
                             <span class="text-gray-500 font-semibold text-sm sm:text-base">Home page Video 2</span>
                         </div>
                     </div>
