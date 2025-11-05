@@ -128,9 +128,8 @@
         ]);
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (checkAuth() && isApproved()) {
-                loadUnit('2.1');
-            }
+            // Load first unit on page load
+            loadUnit('2.1');
         });
     </script>
 </body>

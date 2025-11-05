@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 // Disable x-powered-by header for security
 app.disable('x-powered-by');
 
-// Serve static files from project root with proper caching
+// Serve static files from project root
 app.use(express.static(path.join(__dirname), {
   maxAge: '1h',
   etag: true,
@@ -20,19 +20,13 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// 404 handler
+// 404 handler - serve index.html for SPA routing
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'index.html'));
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`✓ Server running at http://localhost:${PORT}`);
+  console.log(`✓ Static site server running at http://localhost:${PORT}`);
   console.log(`✓ Press Ctrl+C to stop`);
 });
 
@@ -44,5 +38,3 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
-
-
