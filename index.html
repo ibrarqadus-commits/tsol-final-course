@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+        <meta name="description" content="Master the art of property management and build your path to financial freedom through proven lettings and management strategies.">
+        <script src="js/seo.js"></script>
     <style>
         * { font-family: 'Poppins', sans-serif; }
         
@@ -796,10 +798,15 @@
                             const res = await fetch(p, { cache: 'no-cache' });
                             if (res.ok) {
                                 const raw = await res.text();
-                                const safe = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const lines = raw.split(/\r?\n/);
+                                const headingLine = (lines.shift() || '').trim();
+                                const bodyText = lines.join('\n');
+                                const escH = headingLine.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const escBody = bodyText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                                 textEl.innerHTML = `
                                     <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                        <pre class="whitespace-pre-wrap text-sm sm:text-base text-black bg-white border border-gray-200 rounded p-3 sm:p-4 max-h-[640px] overflow-y-auto">${safe}</pre>
+                                        <div class="text-center font-extrabold text-[#244855] text-2xl sm:text-3xl md:text-4xl leading-tight mb-3">${escH}</div>
+                                        ${escBody ? `<pre class=\"whitespace-pre-wrap text-sm sm:text-base text-black bg-white border border-gray-200 rounded p-3 sm:p-4 max-h-[640px] overflow-y-auto\" style=\"font-family: 'Poppins', sans-serif\">${escBody}</pre>` : ''}
                                     </div>
                                 `;
                                 return;

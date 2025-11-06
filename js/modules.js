@@ -157,11 +157,16 @@ async function loadUnit(unitId) {
             const txtRes = await fetch(txtPath, { cache: 'no-cache' });
             if (txtRes.ok) {
                 const txt = await txtRes.text();
-                const safeTxt = txt.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const lines = txt.split(/\r?\n/);
+                const headingLine = (lines.shift() || '').trim();
+                const bodyText = lines.join('\n');
+                const escH = headingLine.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escBody = bodyText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 resourcesHtml = `
                     <h3 class="text-xl font-semibold text-gray-800 mb-3">Unit ${unitId}</h3>
                     <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-6">
-                        <pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto">${safeTxt}</pre>
+                        ${escH ? `<div class="text-center font-extrabold text-[#244855] text-xl sm:text-2xl md:text-3xl leading-tight mb-3">${escH}</div>` : ''}
+                        ${escBody ? `<pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto" style="font-family: 'Poppins', sans-serif">${escBody}</pre>` : ''}
                     </div>
                 `;
                 rendered = true;
@@ -174,11 +179,16 @@ async function loadUnit(unitId) {
                 const mdRes = await fetch(mdPath, { cache: 'no-cache' });
                 if (mdRes.ok) {
                     const mdText = await mdRes.text();
-                    const safeMd = mdText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const lines = mdText.split(/\r?\n/);
+                    const headingLine = (lines.shift() || '').trim();
+                    const bodyText = lines.join('\n');
+                    const escH = headingLine.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escBody = bodyText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     resourcesHtml = `
                         <h3 class="text-xl font-semibold text-gray-800 mb-3">Unit ${unitId}</h3>
                         <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-6">
-                            <pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto">${safeMd}</pre>
+                            ${escH ? `<div class="text-center font-extrabold text-[#244855] text-xl sm:text-2xl md:text-3xl leading-tight mb-3">${escH}</div>` : ''}
+                            ${escBody ? `<pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto" style="font-family: 'Poppins', sans-serif">${escBody}</pre>` : ''}
                         </div>
                     `;
                     rendered = true;
@@ -211,11 +221,16 @@ async function loadUnit(unitId) {
             const resText = await fetch(jsonPath, { cache: 'no-cache' });
             if (resText.ok) {
                 const rawText = await resText.text();
-                const safeText = rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const lines = rawText.split(/\r?\n/);
+                const headingLine = (lines.shift() || '').trim();
+                const bodyText = lines.join('\n');
+                const escH = headingLine.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const escBody = bodyText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 resourcesHtml = `
                     <h3 class="text-xl font-semibold text-gray-800 mb-3">Unit ${unitId}</h3>
                     <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-6">
-                        <pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto">${safeText}</pre>
+                        ${escH ? `<div class="text-center font-extrabold text-[#244855] text-xl sm:text-2xl md:text-3xl leading-tight mb-3">${escH}</div>` : ''}
+                        ${escBody ? `<pre class="whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto" style="font-family: 'Poppins', sans-serif">${escBody}</pre>` : ''}
                     </div>
                 `;
             } else {
@@ -274,10 +289,17 @@ async function loadUnit(unitId) {
                             const res = await fetch(p, { cache: 'no-cache' });
                             if (res.ok) {
                                 const t = await res.text();
-                                const safe = t.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const lines = t.split(/\r?\n/);
+                                const headingLine = (lines.shift() || '').trim();
+                                const bodyText = lines.join('\n');
+                                const escH = headingLine.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                const escBody = bodyText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                                 container.innerHTML = `
                                     <h3 class=\"text-xl font-semibold text-gray-800 mb-3\">Section</h3>
-                                    <pre class=\"whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto\">${safe}</pre>
+                                    <div class=\"border border-gray-200 rounded-lg p-4 bg-gray-50 mb-6\">
+                                        ${escH ? `<div class=\"text-center font-extrabold text-[#244855] text-xl sm:text-2xl md:text-3xl leading-tight mb-3\">${escH}</div>` : ''}
+                                        ${escBody ? `<pre class=\"whitespace-pre-wrap text-sm text-black bg-white border border-gray-200 rounded p-3 max-h-[420px] overflow-y-auto\" style=\"font-family: 'Poppins', sans-serif\">${escBody}</pre>` : ''}
+                                    </div>
                                 `;
                                 return;
                             }
