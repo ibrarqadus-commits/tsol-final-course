@@ -17,8 +17,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Database setup
-const dbPath = path.join(__dirname, 'database.db');
-const db = new sqlite3.Database(dbPath);
+// In Vercel serverless, use /tmp directory (but data won't persist)
+// For production, consider migrating to MongoDB Atlas or another cloud database
+const dbPath = process.env.VERCEL === '1' 
+  ? path.join('/tmp', 'database.db')
+  : path.join(__dirname, 'database.db');
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Database connection error:', err);
+  } else if (process.env.VERCEL === '1') {
+    console.warn('⚠️  Running in Vercel serverless - SQLite database in /tmp (data will not persist)');
+    console.warn('⚠️  Consider migrating to MongoDB Atlas or another cloud database for production');
+  }
+});
 
 // Middleware
 // app.use(helmet()); // Temporarily disable helmet to fix loading issue
@@ -756,19 +768,25 @@ app.use((req, res, next) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`🚀 LM Mastermind server running at http://localhost:${PORT}`);
-  console.log(`📊 Admin emails: ${process.env.ADMIN_EMAILS || 'Not configured'}`);
-  console.log(`📧 Email notifications: ${process.env.EMAIL_USER ? 'Enabled' : 'Disabled'}`);
-  console.log(`🔒 Google OAuth: ${process.env.GOOGLE_CLIENT_ID ? 'Configured' : 'Not configured'}`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\nShutting down server...');
-  db.close();
-  server.close(() => {
-    console.log('Server stopped');
-    process.exit(0);
+// Only start server if not in Vercel serverless environment
+if (process.env.VERCEL !== '1') {
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 LM Mastermind server running at http://localhost:${PORT}`);
+    console.log(`📊 Admin emails: ${process.env.ADMIN_EMAILS || 'Not configured'}`);
+    console.log(`📧 Email notifications: ${process.env.EMAIL_USER ? 'Enabled' : 'Disabled'}`);
+    console.log(`🔒 Google OAuth: ${process.env.GOOGLE_CLIENT_ID ? 'Configured' : 'Not configured'}`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\nShutting down server...');
+    db.close();
+    server.close(() => {
+      console.log('Server stopped');
+      process.exit(0);
+    });
+  });
+}
+
+// Export app for Vercel serverless functions
+module.exports = app;
