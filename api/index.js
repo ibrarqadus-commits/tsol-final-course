@@ -4,8 +4,10 @@
 // Set Vercel environment flag before requiring server
 process.env.VERCEL = '1';
 
+// Import the Express app
 const app = require('../server');
 
-// Export the Express app directly for Vercel
+// Vercel serverless function handler
+// Vercel can handle Express apps directly, but we wrap it to ensure compatibility
 module.exports = app;
 

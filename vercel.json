@@ -4,22 +4,6 @@
     {
       "src": "api/index.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "assets/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "js/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "json/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -52,16 +36,20 @@
       "dest": "/api/index.js"
     },
     {
+      "src": "/health",
+      "dest": "/api/index.js"
+    },
+    {
       "src": "/(.*\\.(html|css|js|json|svg|jpg|jpeg|png|gif|ico|pdf))",
-      "dest": "/$1"
+      "dest": "/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=3600"
+      }
     },
     {
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
 

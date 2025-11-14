@@ -59,14 +59,21 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Session configuration
+// In Vercel serverless, use memory store (sessions won't persist across invocations)
+// For production with persistent sessions, consider Redis or database-backed sessions
+const sessionStore = process.env.VERCEL === '1'
+  ? undefined // Use default memory store in Vercel
+  : new SQLiteStore({ db: 'sessions.db', dir: __dirname });
+
 app.use(session({
-  store: new SQLiteStore({ db: 'sessions.db', dir: __dirname }),
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || '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GOCSPX-qCd-ZEYR2MCosUgIbPnIiW8kHumk',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Helpful for OAuth redirects
   }
 }));
 
@@ -684,6 +691,11 @@ app.get('/admin.html', (req, res, next) => {
 
 // Cleanup function to remove modules 8-14 on startup
 function cleanupModules() {
+  // Skip cleanup in Vercel serverless (database resets anyway)
+  if (process.env.VERCEL === '1') {
+    return;
+  }
+
   db.run('DELETE FROM modules WHERE id > 7', (err) => {
     if (err) {
       console.error('Error cleaning up modules 8-14:', err);
@@ -710,8 +722,10 @@ function cleanupModules() {
   });
 }
 
-// Run cleanup on startup
-cleanupModules();
+// Run cleanup on startup (only in non-Vercel environments)
+if (process.env.VERCEL !== '1') {
+  cleanupModules();
+}
 
 // Health check
 app.get('/health', (req, res) => {
