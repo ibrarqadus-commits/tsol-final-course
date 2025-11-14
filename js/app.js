@@ -235,10 +235,24 @@
                         <div class="w-full lg:w-1/4 p-6 lg:p-8">
                             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                                 <img src="assets/monty.jpg" alt="Monty" class="w-full h-auto object-cover">
-                                <div class="p-4 text-center">
-                                    <a href="https://www.youtube.com/@montyslettingmanagement" target="_blank" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
-                                        Youtube
-                                    </a>
+                                <div class="p-4">
+                                    <div class="flex flex-col gap-3">
+                                        <a href="https://www.youtube.com/@montyslettingmanagement" target="_blank" class="w-full bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-center">
+                                            Youtube
+                                        </a>
+                                        <a href="#" target="_blank" class="w-full bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-center">
+                                            Linkedin
+                                        </a>
+                                        <a href="#" target="_blank" class="w-full bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-center">
+                                            Instagram
+                                        </a>
+                                        <a href="#" target="_blank" class="w-full bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-center">
+                                            Tiktok
+                                        </a>
+                                        <a href="#" target="_blank" class="w-full bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-center">
+                                            LinkTree
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
