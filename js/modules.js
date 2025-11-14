@@ -161,18 +161,63 @@ async function loadUnit(unitId) {
             // Show access denied message
             const contentArea = document.getElementById('contentArea');
             if (contentArea) {
-                contentArea.innerHTML = `
-                    <div class="bg-white rounded-lg shadow-md p-8 text-center">
-                        <div class="mb-6">
-                            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
+                // Module descriptions
+                let moduleDescription = '';
+                
+                if (moduleIdNum === 1) {
+                    moduleDescription = `
+                        <div class="mt-8 pt-8 border-t border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 text-left">Laying the Foundations</h3>
+                            <div class="prose prose-lg max-w-none text-gray-700 space-y-4 text-left">
+                                <p class="text-base leading-relaxed">
+                                    Module One is all about giving you a strong, confident start before you speak to a single landlord. This module walks you through the essentials of how a lettings and management business actually works, what systems you need in place and how to set yourself up the right way from day one.
+                                </p>
+                                <p class="text-base leading-relaxed">
+                                    You learn the full structure of the business model, including how instructions are won, how properties are onboarded and how ongoing management generates long term income. We break down the legal and compliance basics so you understand your responsibilities clearly and avoid common beginner mistakes. You also learn which registrations, documents and tools are required, and how to set them up in a simple and organised way.
+                                </p>
+                                <p class="text-base leading-relaxed">
+                                    This module also covers your positioning, how to present yourself professionally even if you are new, and how to build a foundation that landlords can trust. By the end of Module One you'll have your setup in place, you'll understand the flow of the business and you'll be ready to move into the next stage where you begin attracting and securing landlords with confidence.
+                                </p>
+                            </div>
                         </div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Access Not Granted</h2>
-                        <p class="text-gray-600 mb-6">You do not have access to this module yet. Please request access from the admin or wait for approval.</p>
-                        <a href="/" class="inline-block bg-[#244855] text-white px-6 py-3 rounded-lg hover:bg-[#1a3540] transition">
-                            Return to Home
-                        </a>
+                    `;
+                } else if (moduleIdNum === 2) {
+                    moduleDescription = `
+                        <div class="mt-8 pt-8 border-t border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 text-left">Finding and Attracting Landlords</h3>
+                            <div class="prose prose-lg max-w-none text-gray-700 space-y-4 text-left">
+                                <p class="text-base leading-relaxed">
+                                    Module Two focuses on the most important part of growing your business, bringing landlords into your pipeline. This module shows you practical ways to find the right landlords, approach them confidently and position yourself as a trusted professional even if you are just starting out.
+                                </p>
+                                <p class="text-base leading-relaxed">
+                                    You learn several proven methods for sourcing instructions, including online strategies, local area techniques, relationship building and simple outreach approaches you can use every day. We break down what landlords actually look for, how to speak their language and how to present your service clearly so they understand the value straight away.
+                                </p>
+                                <p class="text-base leading-relaxed">
+                                    You also learn how to prepare your pitch, what to say, how to overcome common objections and how to stand out against traditional agents. We cover follow up methods, how to stay visible, how to build a small network that sends you leads and how to create simple routines that keep your pipeline active.
+                                </p>
+                                <p class="text-base leading-relaxed">
+                                    By the end of Module Two you'll know exactly where to find landlords, how to approach them and how to generate consistent interest in your service. You'll feel more confident starting conversations, setting appointments and moving landlords towards giving you their first instruction.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                contentArea.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-8">
+                        <div class="text-center">
+                            <div class="mb-6">
+                                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Access Not Granted</h2>
+                            <p class="text-gray-600 mb-6">You do not have access to this module yet. Please request access from the admin or wait for approval.</p>
+                            <a href="/" class="inline-block bg-[#244855] text-white px-6 py-3 rounded-lg hover:bg-[#1a3540] transition">
+                                Return to Home
+                            </a>
+                        </div>
+                        ${moduleDescription}
                     </div>
                 `;
             }
