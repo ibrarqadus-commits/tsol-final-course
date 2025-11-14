@@ -185,9 +185,6 @@
 
         // View rendering functions
         function renderLanding() {
-            // Get Module 1 units for homepage
-            const module1Units = moduleUnitsData['1'] || [];
-            
             return `
                 <!-- Header Section (matches module pages) -->
                 <div id="siteLogoFixed" class="fixed top-2 right-2 sm:top-4 sm:right-4 z-40 bg-white/90 backdrop-blur-sm rounded-lg p-1 sm:p-2 shadow-lg transition-opacity duration-200">
@@ -257,20 +254,36 @@
                             </div>
                         </div>
 
-                        <!-- Middle Column - Module Units List -->
+                        <!-- Middle Column - Motivational Description -->
                         <div class="w-full lg:w-2/5 p-6 lg:p-8">
                             <div class="bg-white rounded-lg shadow-lg p-6 h-full">
-                                <h2 class="text-2xl font-bold text-gray-800 mb-4">Module 1</h2>
-                                <h3 class="text-lg font-semibold text-gray-600 mb-6">Foundation & Financial Freedom Roadmap</h3>
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">Monty's Letting and Management Guerrilla Business Mastermind</h2>
                                 
-                                <nav class="space-y-2 max-h-[600px] overflow-y-auto">
-                                    ${module1Units.map(unit => `
-                                        <a href="module1.html?unit=${unit.id}" class="flex items-center p-3 rounded-lg hover:bg-gray-100 transition unit-link text-gray-700">
-                                            <span class="mr-3 text-gray-400">○</span>
-                                            <span>${unit.id} ${unit.title}</span>
-                                        </a>
-                                    `).join('')}
-                                </nav>
+                                <div class="prose prose-lg max-w-none text-gray-700 space-y-4 max-h-[600px] overflow-y-auto">
+                                    <p class="text-base leading-relaxed">
+                                        <strong>Monty's Letting and Management Guerrilla Business Mastermind</strong> is built for people who are ready to break out of routine and take control of their future. If you want a way to create real income, real independence and a business you can be proud of, this programme shows you exactly how to do it.
+                                    </p>
+                                    
+                                    <p class="text-base leading-relaxed">
+                                        You learn how to build a lettings and management business step by step, even if you are starting from zero. No fluff, no theory you can't use, just practical guidance you can act on straight away. You discover how to find landlords, win instructions, manage properties with confidence and grow a business that supports your life goals, not the other way around.
+                                    </p>
+                                    
+                                    <p class="text-base leading-relaxed">
+                                        Everything inside the programme is shaped by more than 25 years of hands on experience in the London property market. You get the shortcuts, the strategies and the insights that normally take years to figure out. This saves you time, money and stress, and gives you a clear advantage from day one.
+                                    </p>
+                                    
+                                    <p class="text-base leading-relaxed">
+                                        You get templates, scripts, checklists and simple systems that help you move fast and stay compliant. Every tool is designed to give you clarity, momentum and confidence. One well managed instruction can potentially recover the cost of the programme, though this is only an illustration, not a guarantee. The focus is on giving you the skillset to create long term results.
+                                    </p>
+                                    
+                                    <p class="text-base leading-relaxed">
+                                        When you join, you become part of the Streets of London Inner Circle, a community of people who want more from life. You learn alongside others who are pushing themselves, building income streams and stepping into a bigger future.
+                                    </p>
+                                    
+                                    <p class="text-base leading-relaxed">
+                                        This mastermind is for anyone who wants to stop waiting, start taking action and build a business that can change their life. If you are ready to move forward, this is where your journey begins.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
