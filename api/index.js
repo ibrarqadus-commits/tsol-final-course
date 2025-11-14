@@ -7,7 +7,9 @@ process.env.VERCEL = '1';
 // Import the Express app
 const app = require('../server');
 
-// Vercel serverless function handler
-// Vercel can handle Express apps directly, but we wrap it to ensure compatibility
-module.exports = app;
+// Export handler function for Vercel serverless
+// Vercel expects a function that receives (req, res)
+module.exports = (req, res) => {
+  return app(req, res);
+};
 
