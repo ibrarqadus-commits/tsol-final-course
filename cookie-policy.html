@@ -174,28 +174,21 @@
         </div>
     </footer>
 
+    <script src="js/site-config.js"></script>
     <script>
-        // Render top-right logo (respects admin settings)
+        // Render top-right logo using global site settings
         (function renderTopRightLogo(){
             try {
                 const logoEl = document.getElementById('siteLogo');
                 if (!logoEl) return;
-                const storedLogo = JSON.parse(localStorage.getItem('siteLogo')) || {};
-                const profileImage = JSON.parse(localStorage.getItem('profileImage')) || {};
-                const src = storedLogo.dataUrl || storedLogo.url || profileImage.dataUrl || profileImage.url;
-                const defaultPng = 'assets/logo.png';
-                const defaultSvg = 'assets/logo.svg';
-
-                if (src) {
-                    logoEl.src = src;
+                if (window.SiteConfig && typeof window.SiteConfig.applyLogo === 'function') {
+                    window.SiteConfig.applyLogo(logoEl);
+                } else {
+                    logoEl.src = 'assets/logo.svg';
                     logoEl.onerror = function(){
                         logoEl.onerror = null;
-                        logoEl.src = defaultPng;
-                        logoEl.onerror = function(){ logoEl.onerror = null; logoEl.src = defaultSvg; };
+                        logoEl.src = 'assets/logo.png';
                     };
-                } else {
-                    logoEl.src = defaultPng;
-                    logoEl.onerror = function(){ logoEl.onerror = null; logoEl.src = defaultSvg; };
                 }
             } catch (e) {}
         })();

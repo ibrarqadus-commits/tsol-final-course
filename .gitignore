@@ -27,3 +27,12 @@ npm-debug.log*
 # Build
 dist/
 build/
+
+# Database files (runtime data)
+database.db
+sessions.db
+*.db-journal
+
+# Temporary files
+*.tmp
+*.temp

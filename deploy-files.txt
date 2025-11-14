@@ -3,9 +3,6 @@
 
 # Root HTML Files
 index.html
-admin.html
-login.html
-register.html
 module1.html
 module2.html
 module3.html
@@ -24,16 +21,19 @@ terms.html
 
 # Configuration Files
 .htaccess
+json/site.json
 
 # Directories to Upload Entirely
 assets/
 js/
+json/
 
 # Files Inside assets/ folder
 assets/logo.svg
 assets/monty.jpg
 
 # Files Inside js/ folder (exclude __tests__ subfolder)
+js/site-config.js
 js/footer.js
 js/layout.js
 js/main.js

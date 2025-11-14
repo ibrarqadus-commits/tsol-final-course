@@ -4,36 +4,36 @@
 
 ```
 Courseinfinity/
-├── server.js              # Express.js server
+├── server.js              # Express.js server for local previews
 ├── package.json           # Node.js dependencies and scripts
-├── start.bat             # Windows quick-start script
+├── start.bat              # Windows quick-start script
 │
-├── index.html            # Homepage
-├── login.html            # Login page
-├── register.html         # Registration page
-├── admin.html            # Admin dashboard
-│
-├── module1.html          # Module 1: Foundation & Financial Freedom
-├── module2.html          # Module 2: Market Understanding
-├── module3.html          # Module 3: Business Setup
-├── module4.html          # Module 4: Client Acquisition
-├── module5.html          # Module 5: Property Management
-├── module6.html          # Module 6: End of Tenancy
-├── module7.html          # Module 7: Scaling & Growth
+├── index.html             # Homepage
+├── module1.html           # Module 1 content
+├── module2.html
+├── module3.html
+├── module4.html
+├── module5.html
+├── module6.html
+├── module7.html
 │
 ├── js/
-│   ├── main.js           # Authentication & progress tracking
-│   ├── modules.js        # Module functionality & video handling
-│   ├── layout.js         # Shared header/navbar injection
-│   ├── footer.js         # Footer component
-│   └── __tests__/        # Jest unit tests
+│   ├── site-config.js     # Shared site configuration loader & helpers
+│   ├── main.js            # Progress tracking helpers
+│   ├── modules.js         # Module functionality & video handling
+│   ├── layout.js          # Shared header/navbar injection
+│   ├── footer.js          # Footer component
+│   ├── seo.js             # Page metadata helpers
+│   └── __tests__/         # Jest unit tests
 │
 ├── assets/
-│   └── logo.svg          # Site logo
+│   └── logo.svg           # Site branding assets
 │
-├── pages/policies/       # Policy documents (TSX/HTML duplicates)
+├── json/
+│   ├── site.json          # Site-wide content configuration
+│   └── units/             # Per-unit JSON content
 │
-└── coverage/             # Test coverage reports (generated)
+└── coverage/              # Test coverage reports (generated)
 ```
 
 ## Available Scripts
@@ -72,20 +72,20 @@ PORT=8080 npm run dev
 
 ## Key Features
 
-### Authentication System
-- **Admin account**: Auto-created on first load (admin@lm.com / admin123)
-- **Student registration**: Requires admin approval
-- **LocalStorage-based**: All user data stored in browser
+### Static Site Configuration
+- `json/site.json` controls hero and secondary videos, logos, profile image, and social links
+- Configuration loads client-side—no login or dashboard is required
+- Safe defaults live in `js/site-config.js` to guarantee the site always renders
 
 ### Progress Tracking
-- Track completion for each unit in all 7 modules
-- Progress bars show completion percentage
-- Admin can view all student progress
+- Track completion for each unit across all 7 modules
+- Progress bars reflect totals on both desktop and mobile sidebars
+- Status lives in the learner's browser via `localStorage` (no backend)
 
 ### Video Management
-- Admin can set module-level and unit-level videos
-- Supports YouTube and Vimeo embeds
-- Unit videos override module videos
+- Home page videos are defined in `json/site.json`
+- Unit JSON files can provide per-unit `videoUrl` overrides
+- Supports YouTube and Vimeo embeds with graceful link fallbacks
 
 ### Responsive Design
 - Mobile-first approach
@@ -195,10 +195,9 @@ Since the app uses localStorage, you can also:
 
 ## Notes
 
-- **No database**: Uses browser localStorage
-- **Client-side only**: All logic runs in browser
-- **No sensitive data**: Passwords stored in plain text in localStorage (demo only)
-- **Admin creation**: Happens automatically via `js/main.js`
+- **Client-side only**: Static HTML/JS—no server-side processing required
+- **No authentication**: Course content is open; progress is stored locally per browser
+- **Config driven**: Update `json/site.json` or per-unit JSON/markdown files to change copy and media
 
 ## Contributing
 

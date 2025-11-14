@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Admin Dashboard - LM Mastermind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #244855 0%, #000000 100%); min-height: 100vh; }
+
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffffff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Status badges */
+        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-approved { background: #dcfce7; color: #166534; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-denied { background: #fee2e2; color: #991b1b; }
+
+        /* Stats cards */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .btn { min-height: 44px; padding: 0.75rem 1.5rem; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-gradient-to-br from-[#244855] to-black flex items-center justify-center z-50">
+        <div class="text-center text-white">
+            <div class="spinner"></div>
+            <p class="mt-4 text-lg">Loading Admin Dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen"></div>
+
+    <script>
+        // Global app state
+        let currentUser = null;
+        let currentView = 'dashboard';
+
+        // API helper
+        const API = {
+            async request(endpoint, options = {}) {
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    ...options
+                };
+
+                try {
+                    const response = await fetch(endpoint, config);
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'API request failed');
+                    }
+
+                    return data;
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            },
+
+            get(endpoint) {
+                return this.request(endpoint);
+            },
+
+            post(endpoint, data) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            }
+        };
+
+        // Authentication functions
+        async function checkAuth() {
+            try {
+                const response = await fetch('/auth/status', { credentials: 'same-origin' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.user) {
+                        // Check role field
+                        const userRole = data.user.role || (data.user.is_admin === 1 ? 'admin' : 'student');
+                        if (userRole === 'admin') {
+                            currentUser = data.user;
+                            return true;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+            return false;
+        }
+
+        function logout() {
+            window.location.href = '/auth/logout';
+        }
+
+        // View rendering functions
+        function renderAdminDashboard(data) {
+            const { students, pendingRequests, unreadMessages, recentRequests } = data;
+
+            return `
+                <div class="container mx-auto px-4 py-8">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+                            <p class="text-gray-300">Manage students, access requests, and course content.</p>
+                        </div>
+                        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                            Logout
+                        </button>
+                    </div>
+
+                    <!-- Stats Overview -->
+                    <div class="grid md:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card text-center">
+                            <div class="text-3xl font-bold text-[#244855] mb-2">${students}</div>
+                            <div class="text-gray-600">Total Students</div>
+                        </div>
+                        <div class="stat-card text-center">
+                            <div class="text-3xl font-bold text-yellow-600 mb-2">${pendingRequests}</div>
+                            <div class="text-gray-600">Pending Requests</div>
+                        </div>
+                        <div class="stat-card text-center">
+                            <div class="text-3xl font-bold text-blue-600 mb-2">${unreadMessages}</div>
+                            <div class="text-gray-600">Unread Messages</div>
+                        </div>
+                        <div class="stat-card text-center">
+                            <div class="text-3xl font-bold text-green-600 mb-2">7</div>
+                            <div class="text-gray-600">Active Modules</div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="mb-6">
+                        <div class="flex space-x-1 bg-white/20 rounded-lg p-1">
+                            <button onclick="showView('requests')" class="nav-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${currentView === 'requests' ? 'bg-white text-[#244855]' : 'text-white hover:bg-white/20'}">
+                                Access Requests
+                            </button>
+                            <button onclick="showView('students')" class="nav-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${currentView === 'students' ? 'bg-white text-[#244855]' : 'text-white hover:bg-white/20'}">
+                                Students
+                            </button>
+                            <button onclick="showView('messages')" class="nav-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition ${currentView === 'messages' ? 'bg-white text-[#244855]' : 'text-white hover:bg-white/20'}">
+                                Messages
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div id="contentArea">
+                        ${renderRequestsView(recentRequests)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRequestsView(requests) {
+            if (!requests || requests.length === 0) {
+                return `
+                    <div class="stat-card text-center py-12">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Pending Requests</h3>
+                        <p class="text-gray-600">All access requests have been processed.</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-bold text-white mb-4">Pending Access Requests</h2>
+                    ${requests.map(request => `
+                        <div class="stat-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900">${request.full_name}</h3>
+                                    <p class="text-gray-600 mb-1">${request.email}</p>
+                                    <p class="text-sm text-gray-500">Requested: Module ${request.module_name}</p>
+                                </div>
+                                <span class="badge badge-pending">Pending</span>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button onclick="processRequest(${request.id}, 'approve')" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                    Approve
+                                </button>
+                                <button onclick="processRequest(${request.id}, 'deny')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                                    Deny
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function renderStudentsView() {
+            try {
+                const response = await fetch('/api/admin/students', { credentials: 'same-origin' });
+                const students = await response.json();
+
+                return `
+                    <div class="space-y-4">
+                        <h2 class="text-2xl font-bold text-white mb-4">All Students</h2>
+                        ${students.map(student => `
+                            <div class="stat-card">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">${student.full_name}</h3>
+                                        <p class="text-gray-600">${student.email}</p>
+                                        <p class="text-sm text-gray-500">Status: ${student.status} | Joined: ${new Date(student.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="badge ${student.status === 'approved' ? 'badge-approved' : student.status === 'pending' ? 'badge-pending' : 'badge-denied'}">
+                                            ${student.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                return `<div class="stat-card text-center py-12"><p class="text-red-600">Error loading students: ${error.message}</p></div>`;
+            }
+        }
+
+        async function renderMessagesView() {
+            try {
+                const messages = await API.get('/api/admin/messages');
+
+                if (!messages || messages.length === 0) {
+                    return `
+                        <div class="stat-card text-center py-12">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">No Messages</h3>
+                            <p class="text-gray-600">No student messages at this time.</p>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="space-y-4">
+                        <h2 class="text-2xl font-bold text-white mb-4">Student Messages</h2>
+                        ${messages.map(message => `
+                            <div class="stat-card">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900">From: ${message.full_name}</h3>
+                                        <p class="text-gray-600 mb-2">${message.email}</p>
+                                        <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">${message.message_content}</p>
+                                        <p class="text-sm text-gray-500 mt-2">Sent: ${new Date(message.created_at).toLocaleString()}</p>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        ${message.status === 'unread' ? `
+                                            <span class="badge badge-pending">Unread</span>
+                                            <button onclick="markAsRead(${message.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
+                                                Mark Read
+                                            </button>
+                                        ` : `
+                                            <span class="badge badge-approved">Read</span>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                return `<div class="stat-card text-center py-12"><p class="text-red-600">Error loading messages: ${error.message}</p></div>`;
+            }
+        }
+
+        // Navigation functions
+        async function showView(view) {
+            currentView = view;
+            const contentArea = document.getElementById('contentArea');
+
+            // Update tab styles
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('bg-white', 'text-[#244855]');
+                tab.classList.add('text-white', 'hover:bg-white/20');
+            });
+            event.target.classList.add('bg-white', 'text-[#244855]');
+            event.target.classList.remove('text-white', 'hover:bg-white/20');
+
+            // Load content
+            let content = '';
+            switch (view) {
+                case 'requests':
+                    try {
+                        const data = await API.get('/api/admin/dashboard');
+                        content = renderRequestsView(data.recentRequests);
+                    } catch (error) {
+                        content = `<div class="stat-card text-center py-12"><p class="text-red-600">Error loading requests</p></div>`;
+                    }
+                    break;
+                case 'students':
+                    content = await renderStudentsView();
+                    break;
+                case 'messages':
+                    content = await renderMessagesView();
+                    break;
+            }
+
+            contentArea.innerHTML = content;
+        }
+
+        // Action functions
+        async function processRequest(requestId, action) {
+            const comment = prompt(`Add a comment for this ${action} decision (optional):`);
+
+            try {
+                await API.post(`/api/admin/access-request/${requestId}`, {
+                    action,
+                    comment: comment || ''
+                });
+
+                alert(`Request ${action}d successfully!`);
+                // Refresh the current view
+                showView(currentView);
+            } catch (error) {
+                alert(`Error processing request: ${error.message}`);
+            }
+        }
+
+        async function markAsRead(messageId) {
+            try {
+                await API.post(`/api/admin/message/${messageId}/read`);
+                // Refresh messages view
+                if (currentView === 'messages') {
+                    showView('messages');
+                }
+            } catch (error) {
+                alert(`Error marking message as read: ${error.message}`);
+            }
+        }
+
+        // Initialize app
+        async function initApp() {
+            // Hide loading screen
+            document.getElementById('loadingScreen').style.display = 'none';
+
+            // Check authentication
+            const isAuthenticated = await checkAuth();
+
+            if (isAuthenticated && currentUser) {
+                // Check if user is admin
+                if (currentUser.isAdmin) {
+                    // Load admin dashboard
+                    try {
+                        const data = await API.get('/api/admin/dashboard');
+                        document.getElementById('app').innerHTML = renderAdminDashboard(data);
+                    } catch (error) {
+                        console.error('Failed to load admin dashboard:', error);
+                        document.getElementById('app').innerHTML = `
+                            <div class="container mx-auto px-4 py-8">
+                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                    <strong class="font-bold">Error loading dashboard!</strong>
+                                    <span class="block sm:inline">${error.message}</span>
+                                    <a href="/" class="mt-4 inline-block text-blue-600 hover:underline">Return to Home</a>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // User is not admin - show access denied
+                    document.getElementById('app').innerHTML = `
+                        <div class="min-h-screen flex items-center justify-center px-4">
+                            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md text-center">
+                                <svg class="w-16 h-16 text-red-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+                                <p class="text-gray-600 mb-6">You do not have admin privileges. Only users with admin email addresses can access this page.</p>
+                                <div class="space-y-3">
+                                    <a href="/" class="block w-full bg-[#244855] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#1a3540] transition">
+                                        Return to Student Dashboard
+                                    </a>
+                                    <button onclick="logout()" class="block w-full bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Not authenticated - redirect to admin login
+                window.location.href = '/admin/login';
+            }
+        }
+
+        // Start the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

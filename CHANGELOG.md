@@ -1,5 +1,24 @@
 # Changelog
 
+# Changelog
+
+## [1.2.0] - 2025-11-13
+
+### Added
+- `js/site-config.js` for centralised site configuration (logos, videos, social links)
+- `js/__tests__/progress.test.js` to cover progress helpers
+
+### Changed
+- Homepage and policy pages now load branding from `json/site.json` instead of admin/localStorage data
+- Documentation updated to reflect the static configuration workflow (no student/admin login)
+- Deployment checklists include the `json/` folder and new test coverage
+
+### Removed
+- Legacy references to student/admin login flows and PHP backend artifacts
+
+### Testing
+- Jest suite passes with new progress-tracking coverage
+
 ## [1.1.0] - 2025-10-30
 
 ### Added
@@ -51,10 +70,8 @@
 ## Notes for Next Version
 
 **Potential improvements:**
-- Add database integration (replace localStorage)
-- Implement password hashing for security
-- Add email notifications for student approvals
-- Create admin CLI tools
+- Consider optional backend sync if cross-device progress tracking is required
+- Explore caching/static generation for large JSON content sets
 - Add Docker support for deployment
 - Implement API rate limiting
 - Add logging middleware (Winston/Morgan)
@@ -62,10 +79,7 @@
 
 **Known limitations:**
 - Uses localStorage (browser-based, no persistence across devices)
-- Passwords stored in plain text (demo only)
-- No email/SMS notifications
-- Manual admin approval required
-- No bulk operations in admin panel
+- Static configuration requires manual JSON updates (no admin UI)
 
 ---
 

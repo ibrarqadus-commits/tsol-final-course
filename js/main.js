@@ -24,3 +24,10 @@ function getModuleProgress(moduleId) {
         return 0;
     }
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        saveProgress,
+        getModuleProgress
+    };
+}

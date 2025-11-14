@@ -1,7 +1,17 @@
 {
-  "hero_video": "https://youtu.be/4bpq4l6L5go",
-  "video2": "",
-  "home_content": ""
+  "heroVideo": "https://youtu.be/4bpq4l6L5go",
+  "secondaryVideo": "",
+  "homeContent": "",
+  "logos": {
+    "primary": "assets/logo.svg",
+    "fallback": "assets/logo.png",
+    "profile": "assets/monty.jpg"
+  },
+  "social": {
+    "youtube": "",
+    "facebook": "",
+    "instagram": "",
+    "tiktok": "",
+    "linktree": ""
+  }
 }
-
-

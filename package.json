@@ -1,8 +1,8 @@
 {
   "name": "lm-mastermind",
-  "version": "1.0.0",
-  "description": "Monty's Letting & Management Guerrilla Business Mastermind Course",
-  "main": "index.html",
+  "version": "2.0.0",
+  "description": "Monty's Letting & Management Guerrilla Business Mastermind Course - Full-Stack Platform",
+  "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
@@ -10,11 +10,15 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "deploy:vercel": "npx vercel --prod --yes --confirm",
-    "clean": "rm -rf node_modules coverage && npm install"
+    "clean": "rm -rf node_modules coverage database.db && npm install",
+    "init-db": "node scripts/init-db.js",
+    "check-oauth": "node scripts/check-oauth-setup.js"
   },
   "jest": {
     "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
     "collectCoverageFrom": [
+      "server/**/*.js",
       "js/**/*.js"
     ],
     "coverageReporters": [
@@ -26,7 +30,9 @@
   "keywords": [
     "course",
     "lettings",
-    "management"
+    "management",
+    "full-stack",
+    "oauth"
   ],
   "author": "",
   "license": "ISC",
@@ -37,6 +43,19 @@
     "jest-environment-jsdom": "^30.2.0"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "sqlite3": "^5.1.6",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "express-session": "^1.18.0",
+    "connect-sqlite3": "^0.9.13",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.4.0",
+    "express-validator": "^7.1.0",
+    "nodemailer": "^6.9.15",
+    "dotenv": "^16.4.5",
+    "bcrypt": "^5.1.1",
+    "ejs": "^3.1.10"
   }
 }

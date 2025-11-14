@@ -10,25 +10,23 @@ Use this checklist to ensure everything is ready for deployment.
 - [ ] `.htaccess` file is created and ready
 - [ ] Tested the site locally
 - [ ] All links work correctly
-- [ ] Registration and login work
-- [ ] Admin panel accessible
+- [ ] `json/site.json` updated with correct links/videos
+- [ ] Hero and secondary videos load locally
 
 ## Files to Upload
 
 ### Essential Files (Must Upload)
 - [ ] `index.html`
-- [ ] `admin.html`
-- [ ] `login.html`
-- [ ] `register.html`
 - [ ] `module1.html` through `module7.html`
 - [ ] All policy HTML files (privacy.html, terms.html, etc.)
 - [ ] `.htaccess`
 - [ ] `assets/` folder (entire folder)
 - [ ] `js/` folder (entire folder, excluding `__tests__`)
+- [ ] `json/` folder (site.json + unit content)
 
 ### Optional Files
-- [ ] `pages/policies/*.html` (if using)
 - [ ] Any additional images or resources
+- [ ] Documentation files (`README.md`, `DEVELOPMENT.md`, etc.)
 
 ## Upload Process
 
@@ -41,10 +39,10 @@ Use this checklist to ensure everything is ready for deployment.
 ## Post-Deployment Testing
 
 - [ ] Homepage loads: `https://yourdomain.com`
-- [ ] Registration page works: `https://yourdomain.com/register.html`
-- [ ] Login page works: `https://yourdomain.com/login.html`
 - [ ] Module pages load: `https://yourdomain.com/module1.html`
-- [ ] Admin panel accessible: `https://yourdomain.com/admin.html`
+- [ ] Policy pages load (privacy, terms, etc.)
+- [ ] Hero video renders (or link fallback) on homepage
+- [ ] Secondary video block hides when unused
 - [ ] CSS styles load correctly
 - [ ] JavaScript functions work
 - [ ] Images display correctly
@@ -67,16 +65,13 @@ Use this checklist to ensure everything is ready for deployment.
 ## Final Steps
 
 - [ ] Share the live URL
-- [ ] Test registration as a new user
-- [ ] Test admin login and approval process
+- [ ] Capture final screenshots for reference
 - [ ] Document any issues for future reference
 
 ---
 
 **Quick Test URLs:**
 - Home: `https://yourdomain.com/`
-- Login: `https://yourdomain.com/login.html`
-- Register: `https://yourdomain.com/register.html`
-- Admin: `https://yourdomain.com/admin.html`
 - Module 1: `https://yourdomain.com/module1.html`
+- Terms: `https://yourdomain.com/terms.html`
 

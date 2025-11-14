@@ -13,7 +13,7 @@
 ### ✅ Step 3: Upload Everything
 1. Click **"Upload"** button
 2. **Select ALL these files** from your computer:
-   - All `.html` files (index.html, admin.html, login.html, register.html, module1-7.html, etc.)
+   - All `.html` files (index.html, module1-7.html, and policy pages)
    - `.htaccess` file
    - `assets` folder (entire folder)
    - `js` folder (entire folder, but skip `__tests__` inside)
@@ -33,11 +33,8 @@
 
 Before uploading, make sure you have:
 
-**HTML Files (18 files):**
+**HTML Files (15 files):**
 - [ ] index.html
-- [ ] admin.html
-- [ ] login.html
-- [ ] register.html
 - [ ] module1.html
 - [ ] module2.html
 - [ ] module3.html
@@ -59,7 +56,8 @@ Before uploading, make sure you have:
 
 **Folders:**
 - [ ] assets/ (with logo.svg and monty.jpg)
-- [ ] js/ (with footer.js, layout.js, main.js, modules.js)
+- [ ] js/ (with site-config.js, footer.js, layout.js, main.js, modules.js)
+- [ ] json/ (with site.json and unit content)
 
 ---
 

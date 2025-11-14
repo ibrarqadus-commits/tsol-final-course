@@ -13,9 +13,6 @@ This is the **simplest manual method** using Hostinger's File Manager (no FTP so
 
    **HTML Files:**
    - ✅ `index.html`
-   - ✅ `admin.html`
-   - ✅ `login.html`
-   - ✅ `register.html`
    - ✅ `module1.html`
    - ✅ `module2.html`
    - ✅ `module3.html`
@@ -38,6 +35,7 @@ This is the **simplest manual method** using Hostinger's File Manager (no FTP so
    **Folders (upload entire folders):**
    - ✅ `assets` folder (with logo.svg and monty.jpg inside)
    - ✅ `js` folder (but **exclude** the `__tests__` subfolder inside)
+   - ✅ `json` folder (keep all subfolders such as `units/`)
 
 ## Step 2: Log in to Hostinger
 
@@ -89,6 +87,7 @@ This is the **simplest manual method** using Hostinger's File Manager (no FTP so
 1. Click **"Upload"**
 2. Navigate to your `js` folder
 3. **Select only these files** (NOT the `__tests__` folder):
+   - `site-config.js`
    - `footer.js`
    - `layout.js`
    - `main.js`
@@ -97,22 +96,34 @@ This is the **simplest manual method** using Hostinger's File Manager (no FTP so
    ```
    public_html/
    └── js/
+    ├── site-config.js
        ├── footer.js
        ├── layout.js
        ├── main.js
        └── modules.js
    ```
 
-## Step 8: Verify File Structure
+## Step 8: Upload JSON Folder
+
+1. Click **"Upload"**
+2. Navigate to your `json` folder
+3. Select the entire folder so that `site.json` and the `units/` directory stay together
+4. After upload, confirm the structure:
+   ```
+   public_html/
+   └── json/
+       ├── site.json
+       └── units/
+           └── ... (per-module unit files)
+   ```
+
+## Step 9: Verify File Structure
 
 Your `public_html` folder should look like this:
 
 ```
 public_html/
 ├── index.html
-├── admin.html
-├── login.html
-├── register.html
 ├── module1.html
 ├── module2.html
 ├── module3.html
@@ -132,25 +143,28 @@ public_html/
 ├── assets/
 │   ├── logo.svg
 │   └── monty.jpg
-└── js/
-    ├── footer.js
-    ├── layout.js
-    ├── main.js
-    └── modules.js
+├── js/
+│   ├── site-config.js
+│   ├── footer.js
+│   ├── layout.js
+│   ├── main.js
+│   └── modules.js
+└── json/
+    ├── site.json
+    └── units/
 ```
 
-## Step 9: Test Your Website
+## Step 10: Test Your Website
 
 1. Open a new browser tab
 2. Go to **`https://yourdomain.com`** (replace with your actual domain)
 3. Test these pages:
    - ✅ Homepage: `https://yourdomain.com/`
-   - ✅ Login: `https://yourdomain.com/login.html`
-   - ✅ Register: `https://yourdomain.com/register.html`
    - ✅ Module 1: `https://yourdomain.com/module1.html`
-   - ✅ Admin: `https://yourdomain.com/admin.html`
+   - ✅ Terms: `https://yourdomain.com/terms.html`
+   - ✅ Check that the hero video or fallback link appears correctly
 
-## Step 10: Enable SSL (If Not Already Active)
+## Step 11: Enable SSL (If Not Already Active)
 
 1. Go back to Hostinger control panel
 2. Look for **"SSL"** or **"Security"**
@@ -173,11 +187,6 @@ Your website should now be live on Hostinger!
 **Solution:** 
 - Check that `assets` and `js` folders are uploaded correctly
 - Make sure folder names are lowercase (not `Assets` or `JS`)
-
-### Problem: Admin panel not working
-**Solution:** 
-- Check browser console (F12) for errors
-- Make sure `js/main.js` and `js/layout.js` are uploaded
 
 ### Problem: Can't see `.htaccess` file
 **Solution:** 

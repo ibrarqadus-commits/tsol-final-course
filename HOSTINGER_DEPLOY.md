@@ -12,20 +12,11 @@ This guide will help you deploy your Courseinfinity project to Hostinger hosting
 
 ### ✅ Files/Folders to INCLUDE:
 - `index.html` (main entry point)
-- `admin.html`
-- `login.html`
-- `register.html`
 - `module1.html` through `module7.html`
-- `accessibility.html`
-- `aml-policy.html`
-- `complaints.html`
-- `cookie-policy.html`
-- `disclaimer.html`
-- `modern-slavery.html`
-- `privacy.html`
-- `terms.html`
+- Policy HTML files (privacy, terms, cookie, accessibility, etc.)
 - `assets/` folder (with all images/logos)
-- `js/` folder (with all JavaScript files)
+- `js/` folder (with all JavaScript helpers)
+- `json/` folder (`site.json` and unit content)
 - `.htaccess` file (for security and routing)
 
 ### ❌ Files/Folders to EXCLUDE:
@@ -103,9 +94,6 @@ Your `public_html` folder should look like this:
 ```
 public_html/
 ├── index.html
-├── admin.html
-├── login.html
-├── register.html
 ├── module1.html
 ├── module2.html
 ├── ... (other HTML files)
@@ -113,18 +101,22 @@ public_html/
 │   ├── logo.svg
 │   └── monty.jpg
 ├── js/
+│   ├── site-config.js
 │   ├── footer.js
 │   ├── layout.js
 │   ├── main.js
 │   └── modules.js
+├── json/
+│   ├── site.json
+│   └── units/
 └── .htaccess
 ```
 
 ### 2. Test Your Site
 1. Visit your domain: `https://yourdomain.com`
-2. Test registration: `https://yourdomain.com/register.html`
-3. Test login: `https://yourdomain.com/login.html`
-4. Test admin panel: `https://yourdomain.com/admin.html`
+2. Confirm hero video (or fallback link) renders on the homepage
+3. Open a module page: `https://yourdomain.com/module1.html`
+4. Check a policy page (e.g. `https://yourdomain.com/terms.html`)
 
 ### 3. Configure SSL (If Not Already Active)
 - In Hostinger control panel, go to "SSL"
@@ -143,15 +135,14 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 ## ⚠️ Important Notes
 
 ### localStorage Limitation
-- This application uses browser localStorage for data storage
-- Student registrations are stored in the user's browser
-- Admin panel will only show students registered in the same browser
-- **For production**, consider migrating to a backend database
+- Progress tracking lives in each learner's browser via `localStorage`
+- Clearing browser storage resets progress to zero
+- **For shared progress across devices**, a backend service would be required
 
 ### Security Considerations
-- The `.htaccess` file includes security headers
-- Passwords are stored in plain text in localStorage (not secure for production)
-- Consider implementing a backend API for authentication
+- The `.htaccess` file includes baseline security headers
+- Review and curate any external links defined in `json/site.json`
+- Add additional server hardening as needed for your hosting setup
 
 ### Performance
 - Enable caching in Hostinger control panel
@@ -173,12 +164,6 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 **Solution**: 
 - Ensure you're using HTTPS (localStorage requires secure context on some browsers)
 - Check browser console for errors
-
-### Issue: Admin Panel Not Showing Students
-**Solution**: 
-- This is expected - localStorage is browser-specific
-- Register a student in the same browser where you're viewing admin panel
-- See the warning message in admin panel for details
 
 ## 📞 Support
 

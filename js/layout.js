@@ -306,27 +306,21 @@
         frag.innerHTML = headerHtml;
         document.body.insertBefore(frag, document.body.firstChild);
 
-        // Render top-right logo (respects admin settings)
+        // Render top-right logo using site configuration
         (function renderTopRightLogo(){
             try {
                 var logoEl = document.getElementById('siteLogoTopRight');
                 if (!logoEl) return;
-                var storedLogo = JSON.parse(localStorage.getItem('siteLogo')) || {};
-                var profileImage = JSON.parse(localStorage.getItem('profileImage')) || {};
-                var src = storedLogo.dataUrl || storedLogo.url || profileImage.dataUrl || profileImage.url;
+                if (window.SiteConfig && typeof window.SiteConfig.applyLogo === 'function') {
+                    window.SiteConfig.applyLogo(logoEl);
+                } else {
                 var defaultSvg = 'assets/logo.svg';
                 var defaultPng = 'assets/logo.png';
-
-                if (src) {
-                    logoEl.src = src;
+                    logoEl.src = defaultSvg;
                     logoEl.onerror = function(){
                         logoEl.onerror = null;
-                        logoEl.src = defaultSvg;
-                        logoEl.onerror = function(){ logoEl.onerror = null; logoEl.src = defaultPng; };
+                        logoEl.src = defaultPng;
                     };
-                } else {
-                    logoEl.src = defaultSvg;
-                    logoEl.onerror = function(){ logoEl.onerror = null; logoEl.src = defaultPng; };
                 }
             } catch (e) {}
         })();
