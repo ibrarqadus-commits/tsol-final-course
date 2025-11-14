@@ -51,10 +51,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting - more lenient in development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 1000 requests in dev, 100 in production
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
@@ -368,6 +371,56 @@ function requireStudent(req, res, next) {
 }
 
 // API Routes
+
+// Get public modules list (no authentication required)
+app.get('/api/modules/public', (req, res) => {
+  // Get all modules (1-7) with basic info
+  const query = `
+    SELECT 
+      id,
+      module_name,
+      description,
+      access_type
+    FROM modules
+    WHERE id <= 7
+    ORDER BY id
+  `;
+
+  db.all(query, [], (err, modules) => {
+    if (err) {
+      console.error('Error fetching public modules:', err);
+      // Return default modules if database query fails (for Vercel cold starts)
+      const defaultModules = [
+        { id: 1, module_name: 'Foundation & Financial Freedom Roadmap', description: '', access_type: 'requires_approval', unit_count: 6 },
+        { id: 2, module_name: 'Market Understanding & Property Strategy', description: '', access_type: 'requires_approval', unit_count: 9 },
+        { id: 3, module_name: 'Business Setup & Compliance Foundations', description: '', access_type: 'requires_approval', unit_count: 7 },
+        { id: 4, module_name: 'Client Acquisition & Lettings Operations', description: '', access_type: 'requires_approval', unit_count: 8 },
+        { id: 5, module_name: 'Property Management & Relationship Building', description: '', access_type: 'requires_approval', unit_count: 10 },
+        { id: 6, module_name: 'End of Tenancy, Renewals & Compliance Updates', description: '', access_type: 'requires_approval', unit_count: 8 },
+        { id: 7, module_name: 'Scaling, Marketing & Portfolio Growth', description: '', access_type: 'requires_approval', unit_count: 8 }
+      ];
+      return res.json({ modules: defaultModules });
+    }
+
+    // Add unit counts based on module ID
+    const moduleUnitCounts = {
+      1: 6,
+      2: 9,
+      3: 7,
+      4: 8,
+      5: 10,
+      6: 8,
+      7: 8
+    };
+
+    const modulesWithCounts = modules.map(module => ({
+      ...module,
+      unit_count: moduleUnitCounts[module.id] || 0
+    }));
+
+    res.json({ modules: modulesWithCounts });
+  });
+});
 
 // Get student dashboard data
 app.get('/api/dashboard', requireStudent, (req, res) => {

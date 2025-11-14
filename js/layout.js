@@ -176,8 +176,12 @@
                     pointer-events: auto !important;
                     display: block !important;
                 }
-                .nav-link-container:hover .module-units-dropdown a {
+                .nav-link-container:hover .module-units-dropdown a:not(.disabled) {
                     pointer-events: auto;
+                }
+                /* Keep disabled links non-clickable even on hover */
+                .nav-link-container:hover .module-units-dropdown a.disabled {
+                    pointer-events: none;
                 }
                 .module-units-dropdown ul {
                     list-style: none;
@@ -203,6 +207,20 @@
                 .module-units-dropdown a:hover {
                     background-color: rgba(255, 255, 255, 0.1);
                     color: white;
+                }
+                /* Disabled dropdown unit links */
+                .module-units-dropdown a.disabled {
+                    opacity: 0.5;
+                    color: rgba(255, 255, 255, 0.5);
+                    cursor: not-allowed;
+                    pointer-events: none;
+                }
+                .module-units-dropdown a.disabled:hover {
+                    background-color: transparent;
+                    color: rgba(255, 255, 255, 0.5);
+                }
+                .module-units-dropdown a.disabled .unit-id {
+                    color: rgba(255, 255, 255, 0.4);
                 }
                 .module-units-dropdown .unit-id {
                     font-weight: 600;
@@ -483,8 +501,14 @@
                     if (dropdowns.length === 0) {
                         return;
                     }
+                    
+                    // Get access status and types from global window object
+                    const userAccessStatus = window.userAccessStatus || {};
+                    const moduleAccessTypes = window.moduleAccessTypes || {};
+                    
                     dropdowns.forEach(dropdown => {
                         const moduleId = dropdown.getAttribute('data-module');
+                        const moduleIdNum = parseInt(moduleId);
                         const units = moduleUnitsData[moduleId] || [];
                         
                         if (units.length > 0) {
@@ -492,7 +516,21 @@
                             units.forEach(unit => {
                                 const modulePage = `module${moduleId}.html`;
                                 const unitUrl = `${modulePage}?unit=${unit.id}`;
-                                html += `<li><a href="${unitUrl}" onclick="event.stopPropagation();"><span class="unit-id">${unit.id}</span>${unit.title}</a></li>`;
+                                
+                                // Check if user has access to this module
+                                const accessStatus = userAccessStatus[moduleIdNum];
+                                const accessType = moduleAccessTypes[moduleIdNum] || 'requires_approval';
+                                
+                                // Determine if link should be clickable
+                                const isClickable = accessStatus === 'approved' || accessType === 'open';
+                                
+                                if (isClickable) {
+                                    // Create clickable link
+                                    html += `<li><a href="${unitUrl}" class="dropdown-unit-link" onclick="event.stopPropagation();"><span class="unit-id">${unit.id}</span>${unit.title}</a></li>`;
+                                } else {
+                                    // Create disabled/non-clickable link
+                                    html += `<li><a href="#" class="dropdown-unit-link disabled" onclick="event.preventDefault(); event.stopPropagation(); return false;" title="Access not granted"><span class="unit-id">${unit.id}</span>${unit.title}</a></li>`;
+                                }
                             });
                             html += '</ul>';
                             dropdown.innerHTML = html;
@@ -502,6 +540,9 @@
                     console.error('Error populating module units dropdowns:', e);
                 }
             }
+            
+            // Make populate function globally accessible for re-triggering
+            window.populateModuleDropdowns = populate;
             
             // Run immediately and also on DOMContentLoaded to ensure it works
             if (document.readyState === 'loading') {

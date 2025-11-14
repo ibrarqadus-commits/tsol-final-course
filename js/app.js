@@ -1,6 +1,86 @@
         // Global app state
         let currentUser = null;
         let currentView = 'landing';
+        let publicModules = [];
+        let userAccessStatus = {}; // Store user's access status for modules
+        
+        // Expose userAccessStatus globally for layout.js dropdown population
+        window.userAccessStatus = {};
+        window.moduleAccessTypes = {}; // Store access_type for each module
+
+        // Module units data
+        const moduleUnitsData = {
+            '1': [
+                { id: '1.1', title: 'Introduction: Current & Desired Situation, Financial Freedom, Background' },
+                { id: '1.2', title: 'Understanding Property Strategies' },
+                { id: '1.3', title: 'Setting Your Financial Freedom Goals + Calculator' },
+                { id: '1.4', title: 'Understanding Service & L&M Fee Structures' },
+                { id: '1.5', title: 'Creating Your Employment Exit & Property Business Plan' },
+                { id: '1.6', title: 'Lettings & Property Management Action Plan + Flow A–Z' }
+            ],
+            '2': [
+                { id: '2.1', title: 'What to Expect as a Lettings & Management Business Owner' },
+                { id: '2.2', title: 'Understanding Different Property Types & Locations' },
+                { id: '2.3', title: '7 Key Steps to Property Management Success' },
+                { id: '2.4', title: 'Best & Worst Property Types for Letting & Management' },
+                { id: '2.5', title: '8 Key Rules for Successful Lettings & Management' },
+                { id: '2.6', title: 'Understanding Landlord & Tenant Demographics' },
+                { id: '2.7', title: 'Identifying Your Target Market & Opportunities' },
+                { id: '2.8', title: 'Using Property Portals & Data Tools' },
+                { id: '2.9', title: 'Research for Property Valuation & Investment Analysis + Recap' }
+            ],
+            '3': [
+                { id: '3.1', title: 'Creating Your Limited Company' },
+                { id: '3.2', title: 'Securing Domain Name & Website Setup' },
+                { id: '3.3', title: 'Registering with TDS & The Property Ombudsman' },
+                { id: '3.4', title: 'Admin Sorted: Internal T&Cs, Tenancy Agreements, Templates, Signatures' },
+                { id: '3.5', title: 'Service Provider Network' },
+                { id: '3.6', title: 'New Legislation, Investment Numbers & Taxes – Golden Opportunity' },
+                { id: '3.7', title: 'Boost: Are You Ready to Onboard Your First Landlord?' }
+            ],
+            '4': [
+                { id: '4.1', title: 'Identifying Locations, Properties & Landlords' },
+                { id: '4.2', title: 'Winning Property Accounts' },
+                { id: '4.3', title: 'Valuation, Keys & Marketing for Viewings' },
+                { id: '4.4', title: 'Professional Photography & Paid Advertising' },
+                { id: '4.5', title: 'Enquiries, Viewings & Securing the Best Tenants' },
+                { id: '4.6', title: 'Holding Deposits & Negotiations' },
+                { id: '4.7', title: 'Sign Tenancy Agreement, Inventory & Handover' },
+                { id: '4.8', title: 'Invoicing & Payment Collection' }
+            ],
+            '5': [
+                { id: '5.1', title: 'Creating an Accounts Ledger' },
+                { id: '5.2', title: 'Monthly Statements & Relationship Building' },
+                { id: '5.3', title: 'Maintenance Reporting & Contractor Sourcing' },
+                { id: '5.4', title: 'Utility & Council Tax Transfers + Running Costs' },
+                { id: '5.5', title: 'Building Landlord Relationships & Brand Value' },
+                { id: '5.6', title: 'Periodic Inspections & Reports' },
+                { id: '5.7', title: 'Inspection Reports (Template) & Renovation Planning' },
+                { id: '5.8', title: 'Managing Renovations & Contractors Effectively' },
+                { id: '5.9', title: 'Running Costs & Budget Control' },
+                { id: '5.10', title: 'Happy Landlord = Long-Term Landlord' }
+            ],
+            '6': [
+                { id: '6.1', title: 'End of Tenancy Process' },
+                { id: '6.2', title: 'Landlord Retention vs Agent Switching' },
+                { id: '6.3', title: 'Remarketing & Avoiding Void Periods' },
+                { id: '6.4', title: 'Securing New Tenants (Rinse & Repeat Model)' },
+                { id: '6.5', title: 'Tenant Checkout, Inventory & Handover' },
+                { id: '6.6', title: 'Repairs, Cleaning & Re-Letting Preparation' },
+                { id: '6.7', title: 'Deposit Return & Closing Utilities' },
+                { id: '6.8', title: 'Updating Landlords with Reports & Invoices' }
+            ],
+            '7': [
+                { id: '7.1', title: 'Business Portfolio Review & Mid-Tenancy Inspections' },
+                { id: '7.2', title: 'Getting More Landlords Effectively' },
+                { id: '7.3', title: 'Expanding Portfolio & Referral Clients' },
+                { id: '7.4', title: 'High-Converting Property Listings & Marketing Strategy' },
+                { id: '7.5', title: 'Professional Property Photography' },
+                { id: '7.6', title: 'Facebook Advertising & Targeting Overseas Landlords' },
+                { id: '7.7', title: 'Scaling Towards Financial Freedom' },
+                { id: '7.8', title: 'Next Course / Graduation Pathway' }
+            ]
+        };
 
         // API helper
         const API = {
@@ -14,7 +94,13 @@
                 };
 
                 try {
+                    // Add timeout to prevent hanging (5 seconds)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    config.signal = controller.signal;
+
                     const response = await fetch(endpoint, config);
+                    clearTimeout(timeoutId);
 
                     // Handle non-JSON responses
                     let data;
@@ -33,7 +119,11 @@
 
                     return data;
                 } catch (error) {
-                    console.error('API Error:', error);
+                    if (error.name === 'AbortError') {
+                        console.warn('API request timed out:', endpoint);
+                    } else {
+                        console.error('API Error:', error);
+                    }
                     throw error;
                 }
             },
@@ -95,81 +185,132 @@
 
         // View rendering functions
         function renderLanding() {
+            // Get Module 1 units for homepage
+            const module1Units = moduleUnitsData['1'] || [];
+            
             return `
-                <div class="container mx-auto px-4 py-12">
-    <!-- Hero Section -->
-                    <div class="text-center mb-16">
-                        <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
-                            Monty's Letting & Management
-                        </h1>
-                        <h2 class="text-2xl md:text-4xl font-light text-white mb-8">
-                            Guerrilla Business Mastermind
-                        </h2>
-                        <p class="text-lg md:text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-                    Master the art of property management and build your path to financial freedom through proven lettings and management strategies.
-                </p>
-
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="/student/login" class="bg-white text-[#244855] px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition btn inline-block text-center">
-                        Get Started (Student)
-                            </a>
-                            <a href="/admin/login" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition btn inline-block text-center">
-                        Admin Login
-                            </a>
-                            <a href="#about" class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-[#244855] transition btn">
-                        Learn More
-                    </a>
+                <!-- Header Section (matches module pages) -->
+                <div id="siteLogoFixed" class="fixed top-2 right-2 sm:top-4 sm:right-4 z-40 bg-white/90 backdrop-blur-sm rounded-lg p-1 sm:p-2 shadow-lg transition-opacity duration-200">
+                    <img id="siteLogoTopRight" src="assets/logo.svg" alt="Logo" class="h-10 w-auto sm:h-16 md:h-[72px]" onerror="this.src='assets/logo.png'" />
                 </div>
-            </div>
-
-                    <!-- Features Section -->
-                    <div id="about" class="grid md:grid-cols-3 gap-8 mb-16">
+                
+                <section id="heroSection" class="bg-gradient-to-b from-[#244855] to-black text-white min-h-[30vh] sm:h-[36vh] flex items-center py-6 sm:py-0 relative">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                         <div class="text-center">
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                                <svg class="w-16 h-16 text-white mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                        </svg>
-                                <h3 class="text-xl font-semibold text-white mb-2">Expert Training</h3>
-                                <p class="text-gray-300">Learn from industry experts with decades of experience in property management.</p>
+                            <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 leading-tight px-2">Monty's Letting & Management</h1>
+                            <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-light mb-3 sm:mb-4 leading-snug px-2">Guerrilla Business Mastermind</h2>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl mb-4 sm:mb-6 max-w-3xl mx-auto leading-relaxed px-4">Master the art of property management and build your path to financial freedom through proven lettings and management strategies.</p>
+                            
+                            <!-- Login Buttons in Hero Section -->
+                            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mt-6 px-4">
+                                <a href="/student/login" class="bg-white text-[#244855] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition shadow-lg inline-block text-center min-w-[160px]">
+                                    Student Login
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <nav id="sharedNavbar" class="bg-white shadow-lg sticky top-0 z-50">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center space-x-2">
+                                <a href="index.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105 active" data-page="index.html">Home</a>
+                                <a href="module1.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module1.html">Module 1</a>
+                                <a href="module2.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module2.html">Module 2</a>
+                                <a href="module3.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module3.html">Module 3</a>
+                                <a href="module4.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module4.html">Module 4</a>
+                                <a href="module5.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module5.html">Module 5</a>
+                                <a href="module6.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module6.html">Module 6</a>
+                                <a href="module7.html" class="nav-link px-4 py-2 rounded-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-105" data-page="module7.html">Module 7</a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <div class="bg-gray-50 min-h-screen">
+                    <!-- Main Content Area - Three Column Layout -->
+                    <div class="flex flex-col lg:flex-row">
+                        <!-- Left Column - Monty's Image -->
+                        <div class="w-full lg:w-1/4 p-6 lg:p-8">
+                            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                                <img src="assets/monty.jpg" alt="Monty" class="w-full h-auto object-cover">
+                                <div class="p-4 text-center">
+                                    <a href="https://www.youtube.com/@montyslettingmanagement" target="_blank" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition">
+                                        Youtube
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="text-center">
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                                <svg class="w-16 h-16 text-white mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                        </svg>
-                                <h3 class="text-xl font-semibold text-white mb-2">7 Comprehensive Modules</h3>
-                                <p class="text-gray-300">Complete curriculum covering everything from business setup to scaling operations.</p>
+                        <!-- Middle Column - Module Units List -->
+                        <div class="w-full lg:w-2/5 p-6 lg:p-8">
+                            <div class="bg-white rounded-lg shadow-lg p-6 h-full">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">Module 1</h2>
+                                <h3 class="text-lg font-semibold text-gray-600 mb-6">Foundation & Financial Freedom Roadmap</h3>
+                                
+                                <nav class="space-y-2 max-h-[600px] overflow-y-auto">
+                                    ${module1Units.map(unit => `
+                                        <a href="module1.html?unit=${unit.id}" class="flex items-center p-3 rounded-lg hover:bg-gray-100 transition unit-link text-gray-700">
+                                            <span class="mr-3 text-gray-400">○</span>
+                                            <span>${unit.id} ${unit.title}</span>
+                                        </a>
+                                    `).join('')}
+                                </nav>
                             </div>
                         </div>
 
-                        <div class="text-center">
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                                <svg class="w-16 h-16 text-white mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                        </svg>
-                                <h3 class="text-xl font-semibold text-white mb-2">Proven Success</h3>
-                                <p class="text-gray-300">Join thousands of successful property managers who have built their businesses with our methods.</p>
+                        <!-- Right Column - Video Player -->
+                        <div class="w-full lg:w-2/5 p-6 lg:p-8">
+                            <div class="bg-white rounded-lg shadow-lg p-6 h-full">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">WELCOME!</h2>
+                                <div class="aspect-video bg-gray-200 rounded-lg overflow-hidden mb-4">
+                                    <iframe 
+                                        class="w-full h-full" 
+                                        src="https://www.youtube.com/embed/4bpq4l6L5go" 
+                                        title="Welcome Video" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
+                                        Watch Later
+                                    </button>
+                                    <button class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
+                                        Share
+                                    </button>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2">welcome 2</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Login Prompt -->
-                    <div class="text-center">
-                        <div class="bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto">
-                            <h3 class="text-2xl font-semibold text-white mb-4">Ready to Start?</h3>
-                            <p class="text-gray-300 mb-6">Choose your login type to access the platform.</p>
-                            <div class="space-y-3">
-                                <a href="/student/login" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-block text-center">
+                    <!-- Login Section Below Content -->
+                    <div class="bg-white border-t border-gray-200 py-8 px-6">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Ready to Get Started?</h3>
+                                <p class="text-gray-600">Choose your login type to access the platform</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                                <a href="/student/login" class="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg text-center min-w-[200px] flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
                                     Student Login
                                 </a>
-                                <a href="/admin/login" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition inline-block text-center">
+                                <a href="/admin/login" class="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg text-center min-w-[200px] flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/>
+                                    </svg>
                                     Admin Login
                                 </a>
                             </div>
                         </div>
                     </div>
+
                 </div>
             `;
         }
@@ -541,6 +682,213 @@
             setTimeout(() => errorDiv.remove(), 10000);
                     }
 
+        // Load public modules from API
+        async function loadPublicModules() {
+            try {
+                const data = await API.get('/api/modules/public');
+                publicModules = data.modules || [];
+                // Store access_type globally for dropdown population
+                if (publicModules) {
+                    publicModules.forEach(module => {
+                        window.moduleAccessTypes[module.id] = module.access_type || 'requires_approval';
+                    });
+                }
+                // Trigger dropdown re-population after loading public modules
+                if (window.populateModuleDropdowns) {
+                    window.populateModuleDropdowns();
+                }
+                // Trigger side panel update
+                if (window.updateSidePanelLinks) {
+                    window.updateSidePanelLinks();
+                }
+                return publicModules;
+            } catch (error) {
+                console.error('Error loading public modules:', error);
+                return [];
+            }
+        }
+
+        // Get user access status for modules (if authenticated)
+        async function loadUserAccessStatus() {
+            if (!currentUser) {
+                userAccessStatus = {};
+                window.userAccessStatus = {};
+                // Trigger dropdown re-population
+                if (window.populateModuleDropdowns) {
+                    window.populateModuleDropdowns();
+                }
+                // Trigger side panel update
+                if (window.updateSidePanelLinks) {
+                    window.updateSidePanelLinks();
+                }
+                return;
+            }
+            try {
+                const data = await API.get('/api/dashboard');
+                if (data.modules) {
+                    data.modules.forEach(module => {
+                        userAccessStatus[module.id] = module.access_status;
+                        window.moduleAccessTypes[module.id] = module.access_type || 'requires_approval';
+                    });
+                }
+                // Update global access status
+                window.userAccessStatus = { ...userAccessStatus };
+                // Trigger dropdown re-population
+                if (window.populateModuleDropdowns) {
+                    window.populateModuleDropdowns();
+                }
+                // Trigger side panel update
+                if (window.updateSidePanelLinks) {
+                    window.updateSidePanelLinks();
+                }
+            } catch (error) {
+                console.error('Error loading user access status:', error);
+            }
+        }
+
+        // Render module card
+        function renderModuleCard(module, isAuthenticated, accessStatus) {
+            const units = moduleUnitsData[module.id.toString()] || [];
+            const isLocked = !isAuthenticated || (accessStatus !== 'approved' && module.access_type === 'requires_approval');
+            const lockClass = isLocked ? 'locked' : '';
+            const statusIcon = isLocked ? 'locked' : 'unlocked';
+            
+            // Determine status text
+            let statusText = 'Sign in required';
+            if (isAuthenticated) {
+                if (accessStatus === 'approved' || module.access_type === 'open') {
+                    statusText = 'Available';
+                } else if (accessStatus === 'pending') {
+                    statusText = 'Pending approval';
+                } else if (accessStatus === 'denied') {
+                    statusText = 'Access denied';
+                } else {
+                    statusText = 'Request access';
+                }
+            }
+
+            // Lock icon SVG
+            const lockIcon = isLocked 
+                ? `<svg class="module-status-icon locked" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                   </svg>`
+                : `<svg class="module-status-icon unlocked" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                   </svg>`;
+
+            // Units tooltip HTML
+            const unitsTooltip = units.length > 0 ? `
+                <div class="module-units-tooltip">
+                    <h4>Units in this module:</h4>
+                    <ul>
+                        ${units.map(unit => `
+                            <li>
+                                <span class="unit-id">${unit.id}</span>
+                                ${unit.title}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : '';
+
+            return `
+                <div class="module-card ${lockClass}" 
+                     data-module-id="${module.id}" 
+                     onclick="handleModuleClick(${module.id}, '${accessStatus || ''}')">
+                    ${lockIcon}
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-900">Module ${module.id}</h3>
+                    </div>
+                    <h4 class="font-medium text-gray-800 mb-2">${module.module_name}</h4>
+                    <p class="text-sm text-gray-600 mb-3">${module.description || ''}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="unit-count-badge">${module.unit_count || units.length} ${module.unit_count === 1 ? 'unit' : 'units'}</span>
+                        <span class="badge ${getStatusBadgeClass(accessStatus, isAuthenticated)}">${statusText}</span>
+                    </div>
+                    ${unitsTooltip}
+                </div>
+            `;
+        }
+
+        // Get status badge class
+        function getStatusBadgeClass(accessStatus, isAuthenticated) {
+            if (!isAuthenticated) return 'badge-open';
+            switch (accessStatus) {
+                case 'approved': return 'badge-approved';
+                case 'pending': return 'badge-pending';
+                case 'denied': return 'badge-denied';
+                default: return 'badge-open';
+            }
+        }
+
+        // Handle module click
+        window.handleModuleClick = function handleModuleClick(moduleId, accessStatus) {
+            if (!currentUser) {
+                // Not authenticated - redirect to login
+                window.location.href = `/student/login?return=${encodeURIComponent(`/module${moduleId}.html`)}`;
+                return;
+            }
+
+            // Check access status
+            const module = publicModules.find(m => m.id === moduleId);
+            if (!module) {
+                showError('Module not found');
+                return;
+            }
+
+            // If module is open, allow access
+            if (module.access_type === 'open') {
+                window.location.href = `/module${moduleId}.html`;
+                return;
+            }
+
+            // Check access status
+            if (accessStatus === 'approved') {
+                window.location.href = `/module${moduleId}.html`;
+            } else if (accessStatus === 'pending') {
+                showError('Your access request is pending approval. Please wait for admin approval.');
+            } else if (accessStatus === 'denied') {
+                showError('Access to this module has been denied. Please contact admin for assistance.');
+            } else {
+                // Not requested - redirect to dashboard to request access
+                window.location.href = '/';
+                setTimeout(() => {
+                    showError('Please request access to this module from your dashboard.');
+                }, 500);
+            }
+        }
+
+        // Render modules grid
+        async function renderModulesGrid() {
+            const grid = document.getElementById('modulesGrid');
+            if (!grid) {
+                // New homepage layout doesn't have modulesGrid - that's fine
+                return;
+            }
+
+            // Load modules
+            await loadPublicModules();
+            
+            // Load user access status if authenticated
+            if (currentUser) {
+                await loadUserAccessStatus();
+            }
+
+            if (publicModules.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center text-gray-300">
+                        <p>No modules available at this time.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = publicModules.map(module => {
+                const accessStatus = userAccessStatus[module.id] || null;
+                return renderModuleCard(module, !!currentUser, accessStatus);
+            }).join('');
+        }
+
         // Initialize app - non-blocking
         async function initApp() {
             // Always hide loading screen immediately
@@ -574,18 +922,21 @@
             Promise.race([
                 checkAuth().catch(() => false),
                 new Promise((resolve) => setTimeout(() => resolve(false), 2000)) // 2 second timeout
-            ]).then((isAuthenticated) => {
+            ]).then(async (isAuthenticated) => {
                 if (isAuthenticated && currentUser) {
                     // Load student dashboard (only for students)
                     loadDashboard().catch((error) => {
                         console.error('Dashboard load error:', error);
                         // Keep landing page if dashboard fails
                     });
+                } else {
+                    // Render modules grid on landing page
+                    await renderModulesGrid();
                 }
-                // If not authenticated, landing page is already shown
-            }).catch((error) => {
+            }).catch(async (error) => {
                 console.error('Auth check error:', error);
-                // Keep landing page on error
+                // Keep landing page on error and render modules
+                await renderModulesGrid();
             });
         }
 
@@ -600,6 +951,7 @@
                 const app = document.getElementById('app');
                 if (app) {
                     app.innerHTML = renderLanding();
+                    // Note: New homepage layout doesn't use modulesGrid, so we skip renderModulesGrid()
                 }
                 
                 // Hide loading screen immediately
@@ -607,6 +959,11 @@
                 if (loadingScreen) {
                     loadingScreen.style.display = 'none';
                 }
+                
+                // Load public modules early to populate access types for dropdowns
+                loadPublicModules().catch((error) => {
+                    console.error('Error loading public modules:', error);
+                });
                 
                 // Then initialize the full app in background (non-blocking)
                 // Use setTimeout to ensure rendering happens first

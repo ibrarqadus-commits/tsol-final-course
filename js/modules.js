@@ -18,6 +18,9 @@ function initModule(moduleId, units) {
     moduleData[moduleId].units = units;
     updateProgress();
     
+    // Update side panel links based on access status
+    updateSidePanelLinks();
+    
     // Check for unit parameter in URL and load it if specified
     const urlParams = new URLSearchParams(window.location.search);
     const unitParam = urlParams.get('unit');
@@ -31,8 +34,152 @@ function initModule(moduleId, units) {
     // Sidebar toggle for mobile - handled in page scripts
 }
 
+// Update side panel unit links based on access status
+function updateSidePanelLinks() {
+    if (!currentModule) {
+        // Try to extract module ID from page if currentModule not set
+        const moduleMatch = window.location.pathname.match(/module(\d+)\.html/);
+        if (moduleMatch) {
+            currentModule = moduleMatch[1];
+        } else {
+            return; // Can't determine module, skip
+        }
+    }
+    
+    const userAccessStatus = window.userAccessStatus || {};
+    const moduleAccessTypes = window.moduleAccessTypes || {};
+    const moduleIdNum = parseInt(currentModule);
+    const accessStatus = userAccessStatus[moduleIdNum];
+    const accessType = moduleAccessTypes[moduleIdNum] || 'requires_approval';
+    
+    // Determine if links should be clickable
+    const isClickable = accessStatus === 'approved' || accessType === 'open';
+    
+    // Find all unit links (both desktop and mobile)
+    const unitLinks = document.querySelectorAll('.unit-link, .unit-link-mobile');
+    
+    unitLinks.forEach(link => {
+        const unitId = link.getAttribute('data-unit');
+        if (!unitId) return;
+        
+        const isMobileLink = link.classList.contains('unit-link-mobile');
+        
+        if (isClickable) {
+            // Enable link
+            link.classList.remove('disabled', 'opacity-50', 'cursor-not-allowed');
+            link.style.pointerEvents = '';
+            link.style.cursor = '';
+            link.style.opacity = '';
+            link.title = '';
+            
+            // Restore original onclick handler (preserve mobile sidebar closing)
+            link.setAttribute('href', '#');
+            if (isMobileLink) {
+                link.setAttribute('onclick', `loadUnit('${unitId}'); closeMobileSidebar(); return false;`);
+            } else {
+                link.setAttribute('onclick', `loadUnit('${unitId}'); return false;`);
+            }
+        } else {
+            // Disable link
+            link.classList.add('disabled', 'opacity-50', 'cursor-not-allowed');
+            link.style.pointerEvents = 'none';
+            link.style.cursor = 'not-allowed';
+            link.style.opacity = '0.5';
+            link.title = 'Access not granted';
+            
+            // Prevent onclick execution
+            link.setAttribute('href', '#');
+            link.setAttribute('onclick', 'event.preventDefault(); return false;');
+        }
+    });
+}
+
+// Make function globally accessible for re-triggering
+window.updateSidePanelLinks = updateSidePanelLinks;
+
+// Inject CSS for disabled side panel links
+(function injectDisabledLinkStyles() {
+    if (document.getElementById('disabled-link-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'disabled-link-styles';
+    style.textContent = `
+        .unit-link.disabled,
+        .unit-link-mobile.disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            color: rgba(107, 114, 128, 0.5) !important;
+        }
+        .unit-link.disabled:hover,
+        .unit-link-mobile.disabled:hover {
+            background-color: transparent !important;
+            color: rgba(107, 114, 128, 0.5) !important;
+        }
+        .unit-link.disabled span,
+        .unit-link-mobile.disabled span {
+            color: rgba(156, 163, 175, 0.5) !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+// Call updateSidePanelLinks when DOM is ready and after access status loads
+(function initializeSidePanelAccess() {
+    function runUpdate() {
+        if (window.updateSidePanelLinks) {
+            window.updateSidePanelLinks();
+        }
+    }
+    
+    // Run immediately if DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runUpdate);
+    } else {
+        runUpdate();
+    }
+    
+    // Also run after a delay to catch dynamically loaded content
+    setTimeout(runUpdate, 200);
+    setTimeout(runUpdate, 1000);
+})();
+
 // Load unit content
 async function loadUnit(unitId) {
+    // Check access status before loading unit
+    if (currentModule) {
+        const userAccessStatus = window.userAccessStatus || {};
+        const moduleAccessTypes = window.moduleAccessTypes || {};
+        const moduleIdNum = parseInt(currentModule);
+        const accessStatus = userAccessStatus[moduleIdNum];
+        const accessType = moduleAccessTypes[moduleIdNum] || 'requires_approval';
+        
+        // Check if user has access to this module
+        const hasAccess = accessStatus === 'approved' || accessType === 'open';
+        
+        if (!hasAccess) {
+            // Show access denied message
+            const contentArea = document.getElementById('contentArea');
+            if (contentArea) {
+                contentArea.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                        <div class="mb-6">
+                            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Access Not Granted</h2>
+                        <p class="text-gray-600 mb-6">You do not have access to this module yet. Please request access from the admin or wait for approval.</p>
+                        <a href="/" class="inline-block bg-[#244855] text-white px-6 py-3 rounded-lg hover:bg-[#1a3540] transition">
+                            Return to Home
+                        </a>
+                    </div>
+                `;
+            }
+            return;
+        }
+    }
+    
     currentUnit = unitId;
     const unitData = moduleData[currentModule].units.find(u => u.id === unitId);
     

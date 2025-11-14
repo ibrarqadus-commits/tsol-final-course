@@ -41,6 +41,7 @@
                             <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
                             <ul class="space-y-2">
                                 <li><a href="index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
+                                <li><a href="/admin/login" class="text-gray-400 hover:text-white transition">Admin Login</a></li>
                             </ul>
                         </div>
                         
