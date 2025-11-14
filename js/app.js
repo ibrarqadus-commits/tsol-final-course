@@ -261,7 +261,7 @@
                                 
                                 <div class="prose prose-lg max-w-none text-gray-700 space-y-4 max-h-[600px] overflow-y-auto">
                                     <p class="text-base leading-relaxed">
-                                        <strong>Monty's Letting and Management Guerrilla Business Mastermind</strong> is built for people who are ready to break out of routine and take control of their future. If you want a way to create real income, real independence and a business you can be proud of, this programme shows you exactly how to do it.
+                                        <strong>This course</strong> is built for people who are ready to break out of routine and take control of their future. If you want a way to create real income, real independence and a business you can be proud of, this programme shows you exactly how to do it.
                                     </p>
                                     
                                     <p class="text-base leading-relaxed">
