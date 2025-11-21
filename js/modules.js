@@ -12,14 +12,92 @@ const moduleData = {
 let currentModule = null;
 let currentUnit = null;
 
+// Load module access status from API if not already loaded
+async function loadModuleAccessStatus() {
+    try {
+        // Check if user is authenticated
+        const authResponse = await fetch('/auth/status');
+        if (!authResponse.ok) {
+            // Not authenticated, set defaults - no modules accessible
+            window.userAccessStatus = {};
+            window.moduleAccessTypes = {};
+            return;
+        }
+        
+        const authData = await authResponse.json();
+        if (!authData.authenticated) {
+            // Not authenticated, set defaults - no modules accessible
+            window.userAccessStatus = {};
+            window.moduleAccessTypes = {};
+            return;
+        }
+        
+        // Fetch dashboard data to get access status
+        const dashboardResponse = await fetch('/api/dashboard');
+        if (dashboardResponse.ok) {
+            const dashboardData = await dashboardResponse.json();
+            if (dashboardData.modules) {
+                window.userAccessStatus = {};
+                window.moduleAccessTypes = {};
+                dashboardData.modules.forEach(module => {
+                    window.userAccessStatus[module.id] = module.access_status;
+                    window.moduleAccessTypes[module.id] = module.access_type || 'requires_approval';
+                });
+                console.log('[loadModuleAccessStatus] Loaded access status:', window.userAccessStatus);
+            }
+        } else {
+            // If API fails, set defaults - no modules accessible
+            window.userAccessStatus = {};
+            window.moduleAccessTypes = {};
+        }
+    } catch (error) {
+        console.error('Error loading module access status:', error);
+        // On error, set defaults - no modules accessible
+        window.userAccessStatus = {};
+        window.moduleAccessTypes = {};
+    }
+}
+
+// Initialize access status on page load
+if (typeof window !== 'undefined') {
+    // Initialize empty defaults - access must be granted through proper channels
+    if (!window.moduleAccessTypes) {
+        window.moduleAccessTypes = {};
+    }
+    if (!window.userAccessStatus) {
+        window.userAccessStatus = {};
+    }
+    
+    // Load access status when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadModuleAccessStatus);
+    } else {
+        loadModuleAccessStatus();
+    }
+}
+
 // Initialize module
-function initModule(moduleId, units) {
+async function initModule(moduleId, units) {
     currentModule = moduleId;
     moduleData[moduleId].units = units;
     updateProgress();
     
-    // Update side panel links based on access status
-    updateSidePanelLinks();
+    console.log(`[initModule] Initializing module ${moduleId}`);
+    
+    // Load access status first, then update side panel links
+    await loadModuleAccessStatus();
+    console.log(`[initModule] Access status loaded for module ${moduleId}:`, {
+        accessStatus: window.userAccessStatus?.[moduleId],
+        accessType: window.moduleAccessTypes?.[moduleId]
+    });
+    
+    // Wait a bit for DOM to be ready, then update side panel links
+    setTimeout(async () => {
+        await updateSidePanelLinks();
+    }, 100);
+    
+    // Also update immediately
+    await updateSidePanelLinks();
     
     // Check for unit parameter in URL and load it if specified
     const urlParams = new URLSearchParams(window.location.search);
@@ -35,7 +113,7 @@ function initModule(moduleId, units) {
 }
 
 // Update side panel unit links based on access status
-function updateSidePanelLinks() {
+async function updateSidePanelLinks() {
     if (!currentModule) {
         // Try to extract module ID from page if currentModule not set
         const moduleMatch = window.location.pathname.match(/module(\d+)\.html/);
@@ -46,17 +124,38 @@ function updateSidePanelLinks() {
         }
     }
     
+    const moduleIdNum = parseInt(currentModule);
+    
+    // Always reload access status to ensure it's current (especially after access is granted)
+    await loadModuleAccessStatus();
+    
     const userAccessStatus = window.userAccessStatus || {};
     const moduleAccessTypes = window.moduleAccessTypes || {};
-    const moduleIdNum = parseInt(currentModule);
     const accessStatus = userAccessStatus[moduleIdNum];
     const accessType = moduleAccessTypes[moduleIdNum] || 'requires_approval';
     
+    // Debug logging
+    console.log(`[updateSidePanelLinks] Module ${moduleIdNum}: accessStatus=${accessStatus}, accessType=${accessType}`);
+    
     // Determine if links should be clickable
-    const isClickable = accessStatus === 'approved' || accessType === 'open';
+    // Module is accessible if:
+    // 1. access_status is 'approved' (student has been granted access - applies to ALL modules)
+    //    Once a module is approved (by admin or via unlockModule1 for Module 1), 
+    //    it will always have 'approved' status on subsequent logins (persistent access)
+    // 2. If student has access data loaded and access is not explicitly denied,
+    //    enable units (handles cases where access was granted but status check might be delayed)
+    const hasAccessData = window.userAccessStatus && Object.keys(window.userAccessStatus).length > 0;
+    const isExplicitlyDenied = accessStatus === 'denied' || accessStatus === 'not_requested';
+    // Once a module is approved (has approved access request), access_status will be 'approved' on all subsequent logins
+    const isClickable = accessStatus === 'approved' 
+        || (hasAccessData && !isExplicitlyDenied && accessStatus !== undefined); // Has access data and not denied
+    
+    console.log(`[updateSidePanelLinks] Module ${moduleIdNum}: isClickable=${isClickable}`);
     
     // Find all unit links (both desktop and mobile)
     const unitLinks = document.querySelectorAll('.unit-link, .unit-link-mobile');
+    
+    console.log(`[updateSidePanelLinks] Found ${unitLinks.length} unit links`);
     
     unitLinks.forEach(link => {
         const unitId = link.getAttribute('data-unit');
@@ -68,8 +167,9 @@ function updateSidePanelLinks() {
             // Enable link
             link.classList.remove('disabled', 'opacity-50', 'cursor-not-allowed');
             link.style.pointerEvents = '';
-            link.style.cursor = '';
-            link.style.opacity = '';
+            link.style.cursor = 'pointer';
+            link.style.opacity = '1';
+            link.style.color = '';
             link.title = '';
             
             // Restore original onclick handler (preserve mobile sidebar closing)
@@ -79,6 +179,8 @@ function updateSidePanelLinks() {
             } else {
                 link.setAttribute('onclick', `loadUnit('${unitId}'); return false;`);
             }
+            
+            console.log(`[updateSidePanelLinks] Enabled link for unit ${unitId}`);
         } else {
             // Disable link
             link.classList.add('disabled', 'opacity-50', 'cursor-not-allowed');
@@ -90,12 +192,15 @@ function updateSidePanelLinks() {
             // Prevent onclick execution
             link.setAttribute('href', '#');
             link.setAttribute('onclick', 'event.preventDefault(); return false;');
+            
+            console.log(`[updateSidePanelLinks] Disabled link for unit ${unitId}`);
         }
     });
 }
 
 // Make function globally accessible for re-triggering
 window.updateSidePanelLinks = updateSidePanelLinks;
+window.loadModuleAccessStatus = loadModuleAccessStatus;
 
 // Inject CSS for disabled side panel links
 (function injectDisabledLinkStyles() {
@@ -126,9 +231,9 @@ window.updateSidePanelLinks = updateSidePanelLinks;
 
 // Call updateSidePanelLinks when DOM is ready and after access status loads
 (function initializeSidePanelAccess() {
-    function runUpdate() {
+    async function runUpdate() {
         if (window.updateSidePanelLinks) {
-            window.updateSidePanelLinks();
+            await window.updateSidePanelLinks();
         }
     }
     
@@ -139,23 +244,38 @@ window.updateSidePanelLinks = updateSidePanelLinks;
         runUpdate();
     }
     
-    // Also run after a delay to catch dynamically loaded content
+    // Also run after delays to catch dynamically loaded content and when access status updates
     setTimeout(runUpdate, 200);
     setTimeout(runUpdate, 1000);
+    setTimeout(runUpdate, 2000); // Extra delay to ensure access status is loaded after page navigation
+    
+    // Expose a function to refresh side panel links (can be called after access is granted)
+    window.refreshSidePanelLinks = runUpdate;
 })();
 
 // Load unit content
 async function loadUnit(unitId) {
     // Check access status before loading unit
     if (currentModule) {
+        const moduleIdNum = parseInt(currentModule);
+        
+        // If access status not loaded, try to fetch it
+        if (!window.userAccessStatus || !window.moduleAccessTypes || !window.moduleAccessTypes[moduleIdNum]) {
+            await loadModuleAccessStatus();
+        }
+        
         const userAccessStatus = window.userAccessStatus || {};
         const moduleAccessTypes = window.moduleAccessTypes || {};
-        const moduleIdNum = parseInt(currentModule);
         const accessStatus = userAccessStatus[moduleIdNum];
         const accessType = moduleAccessTypes[moduleIdNum] || 'requires_approval';
         
         // Check if user has access to this module
-        const hasAccess = accessStatus === 'approved' || accessType === 'open';
+        // All modules require 'approved' access_status (granted by admin or via unlockModule1 for Module 1)
+        // Once a module is approved, it will always have 'approved' status on subsequent logins (persistent access)
+        const hasAccessData = window.userAccessStatus && Object.keys(window.userAccessStatus).length > 0;
+        const isExplicitlyDenied = accessStatus === 'denied' || accessStatus === 'not_requested';
+        const hasAccess = accessStatus === 'approved' 
+            || (hasAccessData && !isExplicitlyDenied && accessStatus !== undefined);
         
         if (!hasAccess) {
             // Show access denied message
@@ -167,9 +287,9 @@ async function loadUnit(unitId) {
                 if (moduleIdNum === 1) {
                     moduleDescription = `
                         <div class="mt-8 pt-8 border-t border-gray-200">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4 text-left">Laying the Foundations</h3>
-                            <div class="prose prose-lg max-w-none text-gray-700 space-y-4 text-left">
-                                <p class="text-base leading-relaxed">
+                            <h3 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6 lg:mb-8 text-left">Laying the Foundations</h3>
+                            <div class="prose prose-lg lg:prose-xl max-w-none text-gray-700 space-y-6 text-left">
+                                <p class="text-base lg:text-lg leading-relaxed">
                                     Module One is all about giving you a strong, confident start before you speak to a single landlord. This module walks you through the essentials of how a lettings and management business actually works, what systems you need in place and how to set yourself up the right way from day one.
                                 </p>
                                 <p class="text-base leading-relaxed">
@@ -184,9 +304,9 @@ async function loadUnit(unitId) {
                 } else if (moduleIdNum === 2) {
                     moduleDescription = `
                         <div class="mt-8 pt-8 border-t border-gray-200">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4 text-left">Finding and Attracting Landlords</h3>
-                            <div class="prose prose-lg max-w-none text-gray-700 space-y-4 text-left">
-                                <p class="text-base leading-relaxed">
+                            <h3 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6 lg:mb-8 text-left">Finding and Attracting Landlords</h3>
+                            <div class="prose prose-lg lg:prose-xl max-w-none text-gray-700 space-y-6 text-left">
+                                <p class="text-base lg:text-lg leading-relaxed">
                                     Module Two focuses on the most important part of growing your business, bringing landlords into your pipeline. This module shows you practical ways to find the right landlords, approach them confidently and position yourself as a trusted professional even if you are just starting out.
                                 </p>
                                 <p class="text-base leading-relaxed">
@@ -204,17 +324,21 @@ async function loadUnit(unitId) {
                 }
                 
                 contentArea.innerHTML = `
-                    <div class="bg-white rounded-lg shadow-md p-8">
+                    <div class="bg-white rounded-lg shadow-md p-8 lg:p-10 xl:p-12">
                         <div class="text-center">
-                            <div class="mb-6">
-                                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="mb-8">
+                                <svg class="mx-auto h-20 w-20 lg:h-24 lg:w-24 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                 </svg>
                             </div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Access Not Granted</h2>
-                            <p class="text-gray-600 mb-6">You do not have access to this module yet. Please request access from the admin or wait for approval.</p>
+                            <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-6">Access Not Granted</h2>
+                            <p class="text-lg lg:text-xl text-gray-600 mb-8">
+                                ${moduleIdNum === 1 
+                                    ? 'Module 1 is free, but you need to authorize access from your dashboard first. Please go to your dashboard and click "Unlock Module 1" to get started.' 
+                                    : 'You do not have access to this module yet. Please request access from the admin or wait for approval.'}
+                            </p>
                             <a href="/" class="inline-block bg-[#244855] text-white px-6 py-3 rounded-lg hover:bg-[#1a3540] transition">
-                                Return to Home
+                                Return to Dashboard
                             </a>
                         </div>
                         ${moduleDescription}
@@ -436,19 +560,19 @@ async function loadUnit(unitId) {
     // Update content area
     const contentArea = document.getElementById('contentArea');
     contentArea.innerHTML = `
-        <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="mb-6 sm:mb-8 lg:mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex-1">
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">${unitId}: ${unitData.title}</h1>
-                <p class="text-sm sm:text-base text-gray-600 mt-2">Module ${currentModule} - ${moduleData[currentModule].title}</p>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-800 mb-2">${unitId}: ${unitData.title}</h1>
+                <p class="text-base sm:text-lg lg:text-xl text-gray-600 mt-2">Module ${currentModule} - ${moduleData[currentModule].title}</p>
             </div>
-            <button onclick="markComplete(event)" class="w-full sm:w-auto bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-green-700 transition text-sm sm:text-base">
+            <button onclick="markComplete(event)" class="w-full sm:w-auto bg-green-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg hover:bg-green-700 transition text-base sm:text-lg font-semibold">
                 Mark as Complete
             </button>
         </div>
         
-        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6">
-            <div class="prose prose-lg max-w-none leading-relaxed text-gray-800">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to ${unitId}</h2>
+        <div class="bg-white rounded-lg shadow-md p-6 sm:p-8 lg:p-10 xl:p-12 mb-6 sm:mb-8 lg:mb-10">
+            <div class="prose prose-lg lg:prose-xl max-w-none leading-relaxed text-gray-800">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-6 lg:mb-8">Welcome to ${unitId}</h2>
                 ${unitContentHtml ? `<div class=\"prose max-w-none mb-6\">${unitContentHtml}</div>` : ``}
 
                 ${embedHtml}
@@ -500,7 +624,7 @@ async function loadUnit(unitId) {
                     container.style.display = 'none';
                 }, 0);
                 return `
-                    <div id=\"${sectionId}\" class=\"bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6\"></div>
+                    <div id=\"${sectionId}\" class=\"bg-white rounded-lg shadow-md p-6 sm:p-8 lg:p-10 xl:p-12 mb-6 sm:mb-8 lg:mb-10\"></div>
                 `;
             } catch (_) {
                 return '';
@@ -563,11 +687,20 @@ function markComplete(event) {
     updateProgress();
 }
 
-// Update progress bar
-function updateProgress() {
+// Update progress bar (loads from backend to sync across devices)
+async function updateProgress() {
     if (!currentModule) return;
     
-    const progress = getModuleProgress(currentModule);
+    // Try to load progress from backend first
+    let progress = 0;
+    try {
+        progress = await getModuleProgressFromBackend(currentModule);
+    } catch (error) {
+        console.error('Error loading progress from backend:', error);
+        // Fallback to localStorage
+        progress = getModuleProgress(currentModule);
+    }
+    
     const totalUnits = moduleData[currentModule].units.length;
     const percentage = (progress / totalUnits) * 100;
     
@@ -592,7 +725,7 @@ function updateProgress() {
         mobileProgressBar.style.width = percentage + '%';
     }
     
-    // Update unit indicators
+    // Update unit indicators (use localStorage for now since we track by unit)
     const progressData = JSON.parse(localStorage.getItem('progress')) || {};
     const moduleProgress = progressData[currentModule] || {};
     
